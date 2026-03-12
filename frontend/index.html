@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mr. Clarke's Briefing Generator — Hawkins Lab</title>
+    <meta name="description"
+        content="AI-powered document to presentation generator with Stranger Things Hawkins Lab theme">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Press+Start+2P&family=Share+Tech+Mono&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <div class="scanline-overlay"></div>
+    <div class="vhs-glitch"></div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="hawkins-header">
+            <div class="radar-ring"></div>
+            <div class="header-content">
+                <div class="lab-badge">⚠ CLASSIFIED</div>
+                <h1 class="glitch-text" data-text="MR. CLARKE'S BRIEFING GENERATOR">MR. CLARKE'S BRIEFING GENERATOR</h1>
+                <p class="subtitle">HAWKINS NATIONAL LABORATORY — AUTOMATED INTELLIGENCE SYSTEM</p>
+                <div class="status-bar">
+                    <span class="status-dot online"></span>
+                    <span class="status-text">SYSTEM ONLINE</span>
+                    <span class="divider">|</span>
+                    <span class="status-text" id="systemStatus">AWAITING DOCUMENT INPUT</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Upload Section -->
+        <section class="terminal-section" id="uploadSection">
+            <div class="section-header">
+                <span class="terminal-prompt">&gt;_</span>
+                <h2>DOCUMENT UPLINK</h2>
+            </div>
+            <div class="upload-zone" id="dropZone">
+                <div class="upload-icon">
+                    <div class="radar-scanner"></div>
+                    <span class="upload-symbol">📡</span>
+                </div>
+                <p class="upload-text">DROP CLASSIFIED FILES HERE</p>
+                <p class="upload-subtext">Supported: PDF, TXT — Max 10MB per file</p>
+                <input type="file" id="fileInput" multiple accept=".pdf,.txt" hidden>
+                <button class="glow-button" id="browseBtn">
+                    <span class="btn-text">SELECT FILES</span>
+                    <span class="btn-glow"></span>
+                </button>
+            </div>
+            <div class="file-list" id="fileList"></div>
+            <button class="glow-button primary" id="uploadBtn" style="display:none;">
+                <span class="btn-text">⬆ UPLOAD & PROCESS</span>
+                <span class="btn-glow"></span>
+            </button>
+        </section>
+
+        <!-- Generate Section -->
+        <section class="terminal-section" id="generateSection" style="display:none;">
+            <div class="section-header">
+                <span class="terminal-prompt">&gt;_</span>
+                <h2>BRIEFING GENERATOR</h2>
+            </div>
+            <div class="input-group">
+                <label class="terminal-label">ENTER BRIEFING TOPIC / QUERY:</label>
+                <div class="terminal-input-wrapper">
+                    <span class="cursor-blink">&gt;</span>
+                    <input type="text" id="topicInput" class="terminal-input"
+                        placeholder="e.g., Summarize the key findings..." autocomplete="off">
+                </div>
+            </div>
+            <div class="input-group">
+                <label class="terminal-label">NUMBER OF SLIDES:</label>
+                <div class="slider-wrapper">
+                    <input type="range" id="slideCount" min="3" max="12" value="6" class="retro-slider">
+                    <span class="slider-value" id="slideCountDisplay">6</span>
+                </div>
+            </div>
+            <button class="glow-button primary large" id="generateBtn">
+                <span class="btn-text">⚡ GENERATE BRIEFING</span>
+                <span class="btn-glow"></span>
+            </button>
+        </section>
+
+        <!-- Progress Section -->
+        <section class="terminal-section" id="progressSection" style="display:none;">
+            <div class="section-header">
+                <span class="terminal-prompt">&gt;_</span>
+                <h2>PROCESSING</h2>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-log" id="progressLog">
+                    <p class="log-entry">&gt; Initializing briefing protocol...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Result Section -->
+        <section class="terminal-section" id="resultSection" style="display:none;">
+            <div class="section-header">
+                <span class="terminal-prompt">&gt;_</span>
+                <h2>BRIEFING READY</h2>
+            </div>
+            <div class="result-card">
+                <div class="result-icon">✅</div>
+                <h3 class="result-title" id="resultTitle">Classification Complete</h3>
+                <p class="result-info" id="resultInfo"></p>
+                <div class="result-actions">
+                    <button class="glow-button preview" id="previewBtn">
+                        <span class="btn-text">👁 PREVIEW BRIEFING</span>
+                        <span class="btn-glow"></span>
+                    </button>
+                    <a class="glow-button download" id="downloadBtn" href="#" download>
+                        <span class="btn-text">⬇ DOWNLOAD (.PPTX)</span>
+                        <span class="btn-glow"></span>
+                    </a>
+                </div>
+                <button class="glow-button secondary" id="newBriefingBtn">
+                    <span class="btn-text">🔄 NEW BRIEFING</span>
+                    <span class="btn-glow"></span>
+                </button>
+            </div>
+        </section>
+
+        <!-- PREVIEW MODAL -->
+        <div class="preview-modal" id="previewModal" style="display:none;">
+            <div class="preview-container">
+                <div class="preview-header">
+                    <h2>📽 SLIDE PREVIEW</h2>
+                    <div class="preview-nav">
+                        <button class="nav-btn" id="prevSlide">◀ PREV</button>
+                        <span class="slide-counter" id="slideCounter">1 / 1</span>
+                        <button class="nav-btn" id="nextSlide">NEXT ▶</button>
+                    </div>
+                    <button class="close-btn" id="closePreview">✕</button>
+                </div>
+                <div class="slide-canvas" id="slideCanvas">
+                    <!-- rendered here by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="hawkins-footer">
+            <p>PROPERTY OF HAWKINS NATIONAL LABORATORY — DEPARTMENT OF ENERGY</p>
+            <p class="footer-sub">Mr. Clarke's AV Club × AI Division — Est. 1983</p>
+        </footer>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+
+</html>
