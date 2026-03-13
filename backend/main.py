@@ -72,7 +72,9 @@ document_store: dict = {
     "last_slide_data": None,  # Last generated slide JSON for preview
 }
 
-rag_engine = RAGEngine()
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+
+rag_engine = RAGEngine(api_key=GOOGLE_API_KEY)
 citation_builder = CitationBuilder()
 
 
@@ -140,6 +142,8 @@ async def upload_documents(files: list[UploadFile] = File(...)):
 
         # Extract text
         text = loader.load_from_bytes(content, file.filename)
+        if not text.strip():
+             continue
         all_text_parts.append(text)
 
         # Track source
@@ -212,9 +216,10 @@ async def generate_presentation(
         context = _keyword_retrieval(topic, document_store["chunks"], k=5)
 
     # Step 2: Generate slide outline via LLM
-    generator = SlideGenerator()
+    generator = SlideGenerator(api_key=GOOGLE_API_KEY)
     try:
-        slide_data = generator.generate_outline(topic, context, num_slides)
+        # Use a reasonable limit for context slides
+        slide_data = generator.generate_outline(topic, context[:10], num_slides)
     except Exception as e:
         raise HTTPException(
             status_code=500,

@@ -30,6 +30,7 @@ const slideCounter = document.getElementById('slideCounter');
 const prevSlide = document.getElementById('prevSlide');
 const nextSlide = document.getElementById('nextSlide');
 const closePreview = document.getElementById('closePreview');
+const listenSlide = document.getElementById('listenSlide');
 
 // ── State ────────────────────────────────────────────────────
 let selectedFiles = [];
@@ -258,10 +259,12 @@ previewBtn.addEventListener('click', async () => {
 
 closePreview.addEventListener('click', () => {
     previewModal.style.display = 'none';
+    if (window.stopNarration) window.stopNarration();
 });
 
 prevSlide.addEventListener('click', () => {
     if (currentSlideIdx > 0) {
+        if (window.stopNarration) window.stopNarration();
         currentSlideIdx--;
         renderSlide();
     }
@@ -269,8 +272,16 @@ prevSlide.addEventListener('click', () => {
 
 nextSlide.addEventListener('click', () => {
     if (currentSlideIdx < previewSlides.length - 1) {
+        if (window.stopNarration) window.stopNarration();
         currentSlideIdx++;
         renderSlide();
+    }
+});
+
+listenSlide.addEventListener('click', () => {
+    if (window.startNarration) {
+        const text = slideCanvas.innerText || slideCanvas.textContent;
+        window.startNarration(text);
     }
 });
 

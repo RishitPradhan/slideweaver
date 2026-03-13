@@ -987,6 +987,22 @@ h1.glitch-text {
     text-align: center;
 }
 
+.narration-btn {
+    margin-left: 20px;
+    border-color: var(--cyan);
+    color: var(--cyan);
+    font-weight: bold;
+    display: inline-flex !important;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 255, 255, 0.1);
+}
+
+.narration-btn:hover {
+    background: rgba(0, 255, 255, 0.2);
+    box-shadow: 0 0 10px var(--cyan);
+}
+
 .close-btn {
     background: transparent;
     border: 1px solid rgba(255, 42, 42, 0.4);

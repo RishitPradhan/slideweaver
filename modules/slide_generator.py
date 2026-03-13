@@ -12,6 +12,7 @@ import json
 import os
 import re
 import requests
+import google.generativeai as genai
 from typing import Dict, Any, List, Optional
 
 
@@ -28,14 +29,17 @@ class SlideGenerator:
     Falls back to offline text-based generation if Ollama is unavailable.
     """
 
-    def __init__(self, model: str = None, base_url: str = None):
+    def __init__(self, api_key: str = None):
         """
         Args:
-            model: Ollama model name (default: llama3).
-            base_url: Ollama API URL (default: http://localhost:11434).
+            api_key: Google Gemini API key.
         """
-        self.model = model or OLLAMA_MODEL
-        self.base_url = base_url or OLLAMA_BASE_URL
+        self.api_key = api_key or os.getenv("GOOGLE_API_KEY")
+        if self.api_key:
+            genai.configure(api_key=self.api_key)
+            self.model = genai.GenerativeModel("gemini-1.5-flash")
+        else:
+            self.model = None
 
     def generate_outline(
         self,
@@ -44,112 +48,68 @@ class SlideGenerator:
         num_slides: int = 6,
     ) -> Dict[str, Any]:
         """
-        Generate a presentation outline. Tries Ollama first,
+        Generate a presentation outline. Tries Gemini first,
         falls back to offline text-based generation if unavailable.
-
-        Args:
-            topic: The presentation topic or user query.
-            context: List of relevant document chunks from RAG.
-            num_slides: Target number of content slides.
-
-        Returns:
-            Dictionary with presentation structure (title, slides).
         """
-        try:
-            return self._call_ollama(topic, context, num_slides)
-        except Exception as e:
-            print(f"[SlideGenerator] Ollama error: {e}")
-            print("[SlideGenerator] Falling back to offline text-based generation.")
-            return self._generate_offline(topic, context, num_slides)
+        if self.model:
+            try:
+                return self._call_gemini(topic, context, num_slides)
+            except Exception as e:
+                print(f"[SlideGenerator] Gemini error: {e}")
+        
+        print("[SlideGenerator] Falling back to offline text-based generation.")
+        return self._generate_offline(topic, context, num_slides)
 
-    def _call_ollama(
+    def _call_gemini(
         self,
         topic: str,
         context: List[str],
         num_slides: int,
     ) -> Dict[str, Any]:
-        """Call Ollama API to generate the slide outline."""
+        """Call Google Gemini API to generate the slide outline."""
 
         context_text = "\n\n".join(context) if context else "No specific context provided."
 
-        system_prompt = """You are Mr. Clarke, the beloved science teacher from Stranger Things.
+        prompt = f"""You are Mr. Clarke, the beloved science teacher from Stranger Things.
 You create exciting, educational presentations that explain complex topics in a way that
 makes students feel like they're uncovering classified Hawkins Lab research.
-
-Your style is enthusiastic, clear, and uses analogies from science and the supernatural.
-You structure information logically and make every slide feel like a discovery.
-
-IMPORTANT: You must respond with ONLY valid JSON. No other text before or after the JSON."""
-
-        user_prompt = f"""Create a presentation about the following topic using the provided document context.
 
 TOPIC: {topic}
 
 DOCUMENT CONTEXT:
-{context_text[:6000]}
+{context_text[:12000]}
 
-Generate exactly {num_slides} content slides plus 1 title slide.
+Generate a presentation outline with exactly {num_slides} items in the "slides" list.
+Include 1 title slide at the beginning, and {num_slides - 1} content slides.
 
-Respond with ONLY valid JSON in this exact structure (no markdown, no code fences, just raw JSON):
+Return ONLY a raw JSON object with this structure:
 {{
-    "title": "Main Presentation Title",
-    "subtitle": "A compelling subtitle",
+    "title": "Presentation Main Title",
+    "subtitle": "Compelling Subtitle",
     "slides": [
         {{
             "type": "title",
-            "title": "Presentation Title",
-            "subtitle": "Subtitle text",
-            "speaker_notes": "Brief intro notes"
+            "title": "Slide Title",
+            "subtitle": "Subtitle",
+            "speaker_notes": "Intro notes"
         }},
         {{
             "type": "bullet_points",
             "title": "Slide Title",
-            "bullet_points": ["Point 1", "Point 2", "Point 3", "Point 4"],
-            "speaker_notes": "Expanded explanation for the presenter"
+            "bullet_points": ["Point 1", "Point 2"],
+            "speaker_notes": "Notes"
         }},
         {{
             "type": "content",
             "title": "Slide Title",
-            "content": "A paragraph of detailed content text",
-            "speaker_notes": "Additional context for the presenter"
+            "content": "Paragraph content",
+            "speaker_notes": "Notes"
         }}
     ]
 }}
-
-Rules:
-- Mix "bullet_points" and "content" slide types for variety
-- Each bullet_points slide should have 3-5 bullet points
-- Content slides should have 2-3 sentences
-- Speaker notes should add value beyond what's on the slide
-- Make titles engaging and descriptive
-- Extract the most important information from the context
-- The title slide must be the first slide with type "title"
-- Respond with ONLY the JSON object, nothing else
 """
-
-        # Call Ollama API
-        response = requests.post(
-            f"{self.base_url}/api/generate",
-            json={
-                "model": self.model,
-                "prompt": user_prompt,
-                "system": system_prompt,
-                "stream": False,
-                "options": {
-                    "temperature": 0.7,
-                    "num_predict": 4096,
-                },
-            },
-            timeout=120,
-        )
-
-        if response.status_code != 200:
-            raise RuntimeError(f"Ollama returned status {response.status_code}: {response.text}")
-
-        result_text = response.json().get("response", "")
-
-        # Parse JSON from response (handle markdown code fences if present)
-        return self._extract_json(result_text)
+        response = self.model.generate_content(prompt)
+        return self._extract_json(response.text)
 
     def _extract_json(self, text: str) -> Dict[str, Any]:
         """Extract and parse JSON from LLM response text."""
@@ -186,10 +146,18 @@ Rules:
     ) -> Dict[str, Any]:
         """
         Generate a presentation using text extraction only (no LLM).
-        Splits document context into slides based on content analysis.
-        This is the ultimate fallback when Ollama is unavailable.
         """
-        full_text = "\n\n".join(context) if context else topic
+        # Filter context to be relevant to the topic
+        relevant_context = []
+        topic_words = set(topic.lower().split())
+        for chunk in context:
+            if any(word in chunk.lower() for word in topic_words):
+                relevant_context.append(chunk)
+        
+        if not relevant_context:
+            relevant_context = context
+            
+        full_text = "\n\n".join(relevant_context) if relevant_context else topic
 
         # Split into sentences
         sentences = re.split(r'(?<=[.!?])\s+', full_text)
@@ -208,10 +176,13 @@ Rules:
             "speaker_notes": "This briefing was generated using offline text extraction mode.",
         })
 
-        # Distribute sentences across slides
-        sentences_per_slide = max(1, len(sentences) // num_slides)
+        # Adjusted count: total requested - 1 (title) - 1 (citation)
+        target_content_slides = max(1, num_slides - 2)
 
-        for i in range(num_slides):
+        # Distribute sentences across slides
+        sentences_per_slide = max(1, len(sentences) // target_content_slides) if target_content_slides > 0 else 1
+
+        for i in range(target_content_slides):
             start_idx = i * sentences_per_slide
             end_idx = start_idx + sentences_per_slide
             slide_sentences = sentences[start_idx:end_idx]
@@ -219,7 +190,8 @@ Rules:
             if not slide_sentences and i < len(sentences):
                 slide_sentences = [sentences[min(i, len(sentences) - 1)]]
             elif not slide_sentences:
-                continue
+                # Add a dummy slide if we run out of content
+                slide_sentences = ["Detailed analysis from the source document."]
 
             if i % 2 == 0:
                 bullets = []

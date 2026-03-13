@@ -9,7 +9,7 @@ Falls back to keyword-based retrieval if embeddings are unavailable.
 
 import os
 import numpy as np
-import requests
+import google.generativeai as genai
 from typing import List, Optional
 
 try:
@@ -29,42 +29,33 @@ class RAGEngine:
     for slide generation. Falls back to keyword matching if embeddings fail.
     """
 
-    def __init__(self, base_url: str = None):
+    def __init__(self, api_key: str = None):
         """
         Initialize the RAG engine.
-
-        Args:
-            base_url: Ollama API base URL.
         """
-        self.base_url = base_url or OLLAMA_BASE_URL
+        self.api_key = api_key or os.getenv("GOOGLE_API_KEY")
         self.chunks: List[str] = []
         self.index = None
         self._embeddings_cache: Optional[np.ndarray] = None
-        self._use_embeddings = True
+        self._use_embeddings = False
+        
+        if self.api_key:
+            genai.configure(api_key=self.api_key)
+            self._use_embeddings = True
 
     def _get_embedding(self, text: str) -> List[float]:
         """
-        Get embedding vector using Ollama's embedding API.
-
-        Args:
-            text: Text to embed.
-
-        Returns:
-            Embedding vector as list of floats.
+        Get embedding vector using Google Gemini API.
         """
-        response = requests.post(
-            f"{self.base_url}/api/embeddings",
-            json={
-                "model": EMBEDDING_MODEL,
-                "prompt": text,
-            },
-            timeout=30,
+        if not self.api_key:
+            return []
+            
+        result = genai.embed_content(
+            model="models/embedding-001",
+            content=text,
+            task_type="retrieval_document"
         )
-
-        if response.status_code != 200:
-            raise RuntimeError(f"Ollama embeddings returned {response.status_code}")
-
-        return response.json().get("embedding", [])
+        return result.get("embedding", [])
 
     def add_documents(self, chunks: List[str]):
         """
