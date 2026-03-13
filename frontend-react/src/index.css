@@ -1,0 +1,72 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Press+Start+2P&display=swap');
+
+html,
+body {
+  @apply bg-hawkins-bg text-hawkins-text font-mono m-0 p-0 overflow-x-hidden min-h-screen;
+}
+
+/* CRT Scanline effect */
+body::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  z-index: 50;
+  background-size: 100% 2px, 3px 100%;
+  pointer-events: none;
+}
+
+/* Glowing text shadows */
+.text-neon-red {
+  color: #ff2a2a;
+  text-shadow: 0 0 5px #ff2a2a, 0 0 10px #ff2a2a, 0 0 20px #ff2a2a;
+}
+
+.text-neon-cyan {
+  color: #00ffff;
+  text-shadow: 0 0 5px #00ffff, 0 0 10px #00ffff, 0 0 20px #00ffff;
+}
+
+/* Glowing borders */
+.border-neon-red {
+  border-color: #ff2a2a;
+  box-shadow: 0 0 5px #ff2a2a, inset 0 0 5px #ff2a2a;
+}
+
+.border-neon-cyan {
+  border-color: #00ffff;
+  box-shadow: 0 0 5px #00ffff, inset 0 0 5px #00ffff;
+}
+
+/* Utility classes for specific animations */
+.glow-effect:hover {
+  text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px currentColor, 0 0 40px currentColor;
+  box-shadow: 0 0 10px #fff, inset 0 0 10px #fff, 0 0 20px currentColor, inset 0 0 20px currentColor;
+}
+
+/* Terminal scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0b0c10;
+  border-left: 1px solid #333;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ff2a2a;
+  border: 1px solid #000;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #ff4d4d;
+}
