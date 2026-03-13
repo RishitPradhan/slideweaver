@@ -1,6 +1,13 @@
 import React, { useState, useRef } from 'react';
-import { UploadCloud, File as FileIcon, X } from 'lucide-react';
+import { UploadCloud, File as FileIcon, FileText, Presentation, X } from 'lucide-react';
 import RetroButton from './RetroButton';
+
+const FILE_ICONS = {
+    '.pdf': '📄',
+    '.txt': '📝',
+    '.docx': '📋',
+    '.pptx': '📊',
+};
 
 const UploadPanel = ({ onUpload, files, setFiles, isUploading }) => {
     const [isDragging, setIsDragging] = useState(false);
@@ -19,7 +26,6 @@ const UploadPanel = ({ onUpload, files, setFiles, isUploading }) => {
     const handleDrop = (e) => {
         e.preventDefault();
         setIsDragging(false);
-
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
             handleFiles(Array.from(e.dataTransfer.files));
         }
@@ -32,19 +38,38 @@ const UploadPanel = ({ onUpload, files, setFiles, isUploading }) => {
     };
 
     const handleFiles = (newFiles) => {
-        // Filter for PDF and TXT
+        const SUPPORTED_TYPES = [
+            'application/pdf',
+            'text/plain',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        ];
+        const SUPPORTED_EXT = ['.pdf', '.txt', '.docx', '.pptx'];
+
         const validFiles = newFiles.filter(file =>
-            file.type === 'application/pdf' ||
-            file.type === 'text/plain' ||
-            file.name.endsWith('.pdf') ||
-            file.name.endsWith('.txt')
+            SUPPORTED_TYPES.includes(file.type) ||
+            SUPPORTED_EXT.some(ext => file.name.toLowerCase().endsWith(ext))
         );
+
+        if (validFiles.length < newFiles.length) {
+            const skipped = newFiles.length - validFiles.length;
+            console.warn(`Skipped ${skipped} unsupported file(s). Supported: PDF, TXT, DOCX, PPTX`);
+        }
 
         setFiles(prev => [...prev, ...validFiles]);
     };
 
     const removeFile = (indexToRemove) => {
         setFiles(files.filter((_, index) => index !== indexToRemove));
+    };
+
+    const getFileIcon = (filename) => {
+        const ext = '.' + filename.split('.').pop().toLowerCase();
+        return FILE_ICONS[ext] || '📄';
+    };
+
+    const getFileExt = (filename) => {
+        return filename.split('.').pop().toUpperCase();
     };
 
     return (
@@ -54,7 +79,7 @@ const UploadPanel = ({ onUpload, files, setFiles, isUploading }) => {
                     Document Uplink
                 </h2>
                 <p className="text-hawkins-text/70 mt-2 text-sm font-mono uppercase">
-                    Requires PDF or TXT format clearance
+                    Accepts PDF, TXT, DOCX, and PPTX documents
                 </p>
             </div>
 
@@ -75,7 +100,7 @@ const UploadPanel = ({ onUpload, files, setFiles, isUploading }) => {
                     onChange={handleFileInput}
                     className="hidden"
                     multiple
-                    accept=".pdf,.txt,application/pdf,text/plain"
+                    accept=".pdf,.txt,.docx,.pptx,application/pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation"
                 />
 
                 <div className={`p-4 rounded-full bg-hawkins-bg border border-hawkins-cyan/30 mb-4 transition-transform duration-300 ${isDragging ? 'animate-bounce' : ''}`}>
@@ -83,13 +108,20 @@ const UploadPanel = ({ onUpload, files, setFiles, isUploading }) => {
                 </div>
 
                 <p className="text-hawkins-text font-terminal text-xs text-center leading-loose">
-                    {isDragging ? 'INITIATE TRANSFER...' : 'DROP CLASSIFIED FILES HERE OR CLICK TO BROWSE'}
+                    {isDragging ? 'INITIATE TRANSFER...' : 'DROP FILES HERE OR CLICK TO BROWSE'}
                 </p>
+
+                <div className="flex gap-3 mt-3">
+                    {['PDF', 'TXT', 'DOCX', 'PPTX'].map(ext => (
+                        <span key={ext} className="text-[10px] font-mono px-2 py-0.5 border border-hawkins-cyan/30 text-hawkins-cyan/60">
+                            {ext}
+                        </span>
+                    ))}
+                </div>
             </div>
 
             {files.length > 0 && (
                 <div className="border border-hawkins-cyan/30 p-4 bg-black/60 font-mono text-sm relative overflow-hidden">
-                    {/* Scanline specifically for the terminal box */}
                     <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px] opacity-50 z-10"></div>
 
                     <div className="flex justify-between items-center mb-4 border-b border-hawkins-cyan/30 pb-2 relative z-20">
@@ -102,8 +134,11 @@ const UploadPanel = ({ onUpload, files, setFiles, isUploading }) => {
                             <li key={`${file.name}-${index}`} className="flex items-center justify-between text-hawkins-text group hover:bg-hawkins-cyan/10 p-1">
                                 <div className="flex items-center gap-2 truncate">
                                     <span className="text-hawkins-cyan">{'>'}</span>
-                                    <FileIcon className="w-4 h-4 text-hawkins-red shrink-0" />
+                                    <span className="text-base">{getFileIcon(file.name)}</span>
                                     <span className="truncate">{file.name}</span>
+                                    <span className="text-[10px] px-1 py-0.5 border border-hawkins-text/20 text-hawkins-text/40 shrink-0">
+                                        {getFileExt(file.name)}
+                                    </span>
                                 </div>
                                 <button
                                     onClick={(e) => { e.stopPropagation(); removeFile(index); }}

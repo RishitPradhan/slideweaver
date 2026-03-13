@@ -21,7 +21,6 @@ const Home = () => {
     const [result, setResult] = useState(null);
 
     const handleStart = () => {
-        // Add VHS glitch effect logic if desired, for now jump straight to next
         document.body.classList.add('animate-vhs-glitch');
         setTimeout(() => {
             document.body.classList.remove('animate-vhs-glitch');
@@ -59,7 +58,7 @@ const Home = () => {
         }
     };
 
-    const handleGenerate = async (query, slideCount) => {
+    const handleGenerate = async (query, slideCount, options = {}) => {
         setIsGenerating(true);
 
         document.body.classList.add('animate-vhs-glitch');
@@ -71,6 +70,12 @@ const Home = () => {
                 const formData = new FormData();
                 formData.append('topic', query);
                 formData.append('num_slides', slideCount);
+                formData.append('tone', options.tone || 'professional');
+                formData.append('verbosity', options.verbosity || 'standard');
+                formData.append('language', options.language || 'English');
+                formData.append('template', options.template || 'hawkins_dark');
+                formData.append('include_images', options.includeImages || false);
+                formData.append('include_toc', options.includeToc || false);
 
                 const response = await fetch('http://localhost:8000/generate-presentation', {
                     method: 'POST',
@@ -86,7 +91,8 @@ const Home = () => {
                     title: data.title,
                     filename: data.filename,
                     download_url: data.download_url,
-                    slides_count: data.slides_count
+                    slides_count: data.slides_count,
+                    theme: data.theme,
                 });
 
                 document.body.classList.add('animate-vhs-glitch');
@@ -98,7 +104,7 @@ const Home = () => {
             } catch (error) {
                 console.error('Error generating:', error);
                 setIsGenerating(false);
-                alert('Failed to generate presentation. Please check if the backend server is running and API keys are set.');
+                alert('Failed to generate presentation. Please check if the backend server is running.');
                 setStage(STAGES.QUERY);
             }
         }, 500);
@@ -126,10 +132,10 @@ const Home = () => {
                 {stage !== STAGES.LANDING && (
                     <header className="absolute top-4 left-4 right-4 flex justify-between items-center opacity-70 animate-fade-in pointer-events-none">
                         <div className="font-terminal text-[10px] md:text-xs text-hawkins-red tracking-widest uppercase">
-                            HAWKINS LAB - DEPT OF ENERGY
+                            SLIDEWEAVER — AI BRIEFING GENERATOR
                         </div>
                         <div className="font-mono text-xs text-hawkins-cyan">
-                            {new Date().toISOString().split('T')[0]} // SYS:ACTIVE
+                            {new Date().toISOString().split('T')[0]} // v2.0
                         </div>
                     </header>
                 )}

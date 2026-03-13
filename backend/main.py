@@ -1,11 +1,9 @@
 """
 Mr. Clarke's Automated Briefing Generator — FastAPI Backend
 
-Adapted from:
-  - pdf-to-slides-ai-generator: FastAPI app structure, endpoints, file upload handling
-  - presenton: API routing patterns, static file serving
-
 Provides endpoints to upload documents, generate themed presentations, and download them.
+Now supports: Google Gemini LLM, AI images, dynamic themes, DOCX/PPTX import,
+tone/verbosity/language controls.
 """
 
 import os
@@ -24,30 +22,35 @@ from dotenv import load_dotenv
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PROJECT_ROOT)
 
+# Load environment variables before importing any custom modules
+load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
+
 from modules.document_loader import DocumentLoader
 from modules.chunker import TextChunker
 from modules.rag_engine import RAGEngine
 from modules.slide_generator import SlideGenerator
 from modules.pptx_builder import PptxBuilder
 from modules.citation_builder import CitationBuilder
-
-load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
+from modules.image_generator import process_slides_images
+from modules.theme_engine import THEME_PRESETS, generate_color_palette
 
 # ── App Configuration ─────────────────────────────────────────────
 UPLOAD_DIR = os.path.join(PROJECT_ROOT, "data")
 VECTOR_DIR = os.path.join(PROJECT_ROOT, "vector_store")
 SLIDES_DIR = os.path.join(PROJECT_ROOT, "slides")
+IMAGES_DIR = os.path.join(SLIDES_DIR, "images")
 FRONTEND_DIR = os.path.join(PROJECT_ROOT, "frontend")
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(VECTOR_DIR, exist_ok=True)
 os.makedirs(SLIDES_DIR, exist_ok=True)
+os.makedirs(IMAGES_DIR, exist_ok=True)
 
 # ── FastAPI App ───────────────────────────────────────────────────
 app = FastAPI(
     title="Mr. Clarke's Automated Briefing Generator",
-    description="AI-powered document to presentation system — Hawkins Lab Edition",
-    version="1.0.0",
+    description="AI-powered document to presentation system",
+    version="2.0.0",
 )
 
 app.add_middleware(
@@ -61,15 +64,16 @@ app.add_middleware(
 # Serve frontend static files
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
 
+# Serve generated images for preview
+app.mount("/images", StaticFiles(directory=IMAGES_DIR), name="images")
+
 # ── Shared State ──────────────────────────────────────────────────
-# In a production app these would be in a database/cache.
-# For the hackathon we keep them in memory.
 document_store: dict = {
-    "files": [],       # List of uploaded file metadata
-    "full_text": "",   # Combined extracted text
-    "chunks": [],      # Text chunks
-    "indexed": False,  # Whether FAISS index is built
-    "last_slide_data": None,  # Last generated slide JSON for preview
+    "files": [],
+    "full_text": "",
+    "chunks": [],
+    "indexed": False,
+    "last_slide_data": None,
 }
 
 rag_engine = RAGEngine()
@@ -77,10 +81,6 @@ citation_builder = CitationBuilder()
 
 
 def _keyword_retrieval(query: str, chunks: list, k: int = 5) -> list:
-    """
-    Simple keyword-based retrieval fallback when FAISS/embeddings aren't available.
-    Scores chunks by keyword overlap with the query.
-    """
     if not chunks:
         return [document_store.get("full_text", "")[:3000]]
 
@@ -100,36 +100,33 @@ def _keyword_retrieval(query: str, chunks: list, k: int = 5) -> list:
 
 @app.get("/")
 async def serve_frontend():
-    """Serve the main frontend page."""
     index_path = os.path.join(FRONTEND_DIR, "index.html")
     if os.path.exists(index_path):
         return FileResponse(index_path)
-    return JSONResponse({"message": "Mr. Clarke's Briefing Generator API is running"})
+    return JSONResponse({"message": "Slideweaver API is running"})
 
 
 @app.post("/upload-documents")
 async def upload_documents(files: list[UploadFile] = File(...)):
     """
-    Upload one or more documents (PDF or TXT).
+    Upload documents (PDF, TXT, DOCX, PPTX).
     Extracts text, chunks it, and builds the FAISS vector index.
-
-    Adapted from pdf-to-slides create_presentation_from_pdf() endpoint.
     """
     loader = DocumentLoader()
     chunker = TextChunker(chunk_size=500, chunk_overlap=50)
     all_text_parts = []
     uploaded_info = []
 
+    SUPPORTED = {".pdf", ".txt", ".docx", ".pptx"}
+
     for file in files:
-        # Validate file type
         ext = os.path.splitext(file.filename)[1].lower()
-        if ext not in {".pdf", ".txt"}:
+        if ext not in SUPPORTED:
             raise HTTPException(
                 status_code=400,
-                detail=f"Unsupported file type: {ext}. Only PDF and TXT are supported.",
+                detail=f"Unsupported file type: {ext}. Supported: {', '.join(SUPPORTED)}",
             )
 
-        # Save file
         file_id = str(uuid.uuid4())[:8]
         save_name = f"{file_id}_{file.filename}"
         save_path = os.path.join(UPLOAD_DIR, save_name)
@@ -138,11 +135,9 @@ async def upload_documents(files: list[UploadFile] = File(...)):
         with open(save_path, "wb") as f:
             f.write(content)
 
-        # Extract text
         text = loader.load_from_bytes(content, file.filename)
         all_text_parts.append(text)
 
-        # Track source
         citation_builder.add_source(file.filename, f"Uploaded document ({len(text)} chars)")
         uploaded_info.append({
             "filename": file.filename,
@@ -150,23 +145,19 @@ async def upload_documents(files: list[UploadFile] = File(...)):
             "text_length": len(text),
         })
 
-    # Combine all text
     full_text = "\n\n".join(all_text_parts)
     document_store["full_text"] = full_text
     document_store["files"] = uploaded_info
 
-    # Chunk the text
     chunks = chunker.chunk_text(full_text)
     document_store["chunks"] = chunks
 
-    # Build FAISS index
     try:
         rag_engine.add_documents(chunks)
         document_store["indexed"] = True
         rag_engine.save_index(VECTOR_DIR)
     except Exception as e:
         document_store["indexed"] = False
-        # Continue without RAG — will use full text fallback
         print(f"Warning: Could not build vector index: {e}")
 
     return JSONResponse({
@@ -182,86 +173,160 @@ async def upload_documents(files: list[UploadFile] = File(...)):
 async def generate_presentation(
     topic: str = Form(...),
     num_slides: int = Form(6),
+    tone: str = Form("professional"),
+    verbosity: str = Form("standard"),
+    language: str = Form("English"),
+    template: str = Form("hawkins_dark"),
+    include_images: str = Form("false"),
+    include_toc: str = Form("false"),
 ):
     """
-    Generate a Stranger Things themed presentation from uploaded documents.
-
-    Pipeline:
-    1. Retrieve relevant chunks via RAG (or use full text)
-    2. Send to LLM for slide outline generation
-    3. Build themed PPTX with python-pptx
-    4. Return download info
-
-    Adapted from pdf-to-slides create_presentation() and
-    slide-deck-ai SlideDeckAI.generate() flow.
+    Generate a themed presentation with full customization options.
     """
+    # Parse string booleans from FormData (JavaScript sends "true"/"false" as strings)
+    images_enabled = include_images.lower() in ("true", "1", "yes", "on")
+    toc_enabled = include_toc.lower() in ("true", "1", "yes", "on")
+
+    print(f"[generate-presentation] include_images={include_images!r} -> {images_enabled}")
+    print(f"[generate-presentation] include_toc={include_toc!r} -> {toc_enabled}")
+
     if not document_store["full_text"]:
         raise HTTPException(
             status_code=400,
             detail="No documents uploaded yet. Please upload documents first.",
         )
 
+    print(f"\n{'='*60}")
+    print(f"[PIPELINE] Starting presentation generation")
+    print(f"[PIPELINE] Topic: {topic}")
+    print(f"[PIPELINE] Slides: {num_slides}, Images: {images_enabled}, TOC: {toc_enabled}")
+    print(f"{'='*60}")
+
     # Step 1: Retrieve relevant context
+    print("\n[STEP 1] Retrieving relevant context...")
     if document_store["indexed"]:
         try:
             context = rag_engine.query(topic, k=5)
         except Exception:
             context = _keyword_retrieval(topic, document_store["chunks"], k=5)
     else:
-        # Fallback: keyword-based retrieval from stored chunks
         context = _keyword_retrieval(topic, document_store["chunks"], k=5)
+    print(f"[STEP 1] Retrieved {len(context)} context chunks")
 
     # Step 2: Generate slide outline via LLM
+    print("\n[STEP 2] Generating slide outline via LLM...")
     generator = SlideGenerator()
     try:
-        slide_data = generator.generate_outline(topic, context, num_slides)
+        slide_data = generator.generate_outline(
+            topic, context, num_slides,
+            tone=tone, verbosity=verbosity, language=language,
+            include_images=images_enabled, include_toc=toc_enabled,
+        )
     except Exception as e:
+        print(f"[STEP 2] FAILED: {e}")
         raise HTTPException(
             status_code=500,
             detail=f"Failed to generate presentation outline: {str(e)}",
         )
 
-    # Step 3: Add citation slide
+    slides = slide_data.get("slides", [])
+    print(f"[STEP 2] Generated {len(slides)} slides:")
+    for i, s in enumerate(slides):
+        has_img = "__image_prompt__" in s
+        print(f"  [{i}] type={s.get('type')}, title={s.get('title', '')[:40]}, has_image_prompt={has_img}")
+
+    # Step 3: Process images
+    if images_enabled and "slides" in slide_data:
+        print("\n[STEP 3] Processing images...")
+
+        # Auto-inject __image_prompt__ for slides that don't have one
+        image_count = sum(1 for s in slide_data["slides"] if "__image_prompt__" in s)
+        print(f"[STEP 3] LLM included {image_count} image prompts")
+
+        if image_count == 0:
+            print("[STEP 3] Auto-injecting image prompts into content slides...")
+            inject_count = 0
+            for s in slide_data["slides"]:
+                if inject_count >= 2:
+                    break
+                if s.get("type") in ("content", "bullet_points") and "__image_prompt__" not in s:
+                    title = s.get("title", "")
+                    content = s.get("content", "")
+                    if not content and s.get("bullet_points"):
+                        content = ", ".join(str(b) for b in s["bullet_points"][:3])
+                    s["__image_prompt__"] = f"Professional photo related to: {title}. {content[:80]}"
+                    s["type"] = "image"
+                    inject_count += 1
+                    print(f"  -> Injected prompt for: {title}")
+            print(f"[STEP 3] Injected {inject_count} image prompts")
+
+        try:
+            slide_data["slides"] = process_slides_images(
+                slide_data["slides"], output_dir=IMAGES_DIR
+            )
+        except Exception as e:
+            print(f"[STEP 3] WARNING: Image generation failed: {e}")
+            import traceback
+            traceback.print_exc()
+
+        # Log final state
+        for i, s in enumerate(slide_data["slides"]):
+            if "__image_path__" in s:
+                print(f"  [{i}] IMAGE: {s['__image_path__']}")
+    else:
+        print("\n[STEP 3] Skipped (images_enabled={images_enabled})")
+
+    # Step 4: Add citation slide
+    print("\n[STEP 4] Adding citation slide...")
     citation_slide = citation_builder.build_citation_slide()
     if "slides" in slide_data:
         slide_data["slides"].append(citation_slide)
 
     # Store for preview
     document_store["last_slide_data"] = slide_data
+    print(f"[STEP 4] Stored {len(slide_data.get('slides', []))} slides for preview")
 
-    # Step 4: Build themed PPTX
-    builder = PptxBuilder(output_dir=SLIDES_DIR)
+    # Step 5: Build themed PPTX
+    print("\n[STEP 5] Building themed PPTX...")
+    builder = PptxBuilder(output_dir=SLIDES_DIR, theme_name=template)
     try:
         filepath = builder.build(slide_data)
     except Exception as e:
+        print(f"[STEP 5] FAILED: {e}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=500,
             detail=f"Failed to build presentation: {str(e)}",
         )
 
     filename = os.path.basename(filepath)
+    print(f"[STEP 5] PPTX saved: {filename}")
+    print(f"{'='*60}")
+    print(f"[PIPELINE] COMPLETE - {len(slide_data.get('slides', []))} slides")
+    print(f"{'='*60}\n")
+
+    # Get the theme colors to send to the frontend
+    from modules.theme_engine import get_theme
+    theme_colors = get_theme(template)
 
     return JSONResponse({
         "status": "success",
-        "message": "Briefing generated successfully!",
+        "message": "Presentation generated successfully!",
         "filename": filename,
         "download_url": f"/download-presentation/{filename}",
         "slides_count": len(slide_data.get("slides", [])),
-        "title": slide_data.get("title", "Classified Briefing"),
+        "title": slide_data.get("title", "Presentation"),
+        "theme": template,
+        "theme_colors": theme_colors,
     })
 
 
 @app.get("/download-presentation/{filename}")
 async def download_presentation(filename: str):
-    """
-    Download a generated presentation file.
-    Adapted from pdf-to-slides download_presentation() endpoint.
-    """
     filepath = os.path.join(SLIDES_DIR, filename)
-
     if not os.path.exists(filepath):
         raise HTTPException(status_code=404, detail="Presentation file not found.")
-
     return FileResponse(
         path=filepath,
         filename=filename,
@@ -271,20 +336,67 @@ async def download_presentation(filename: str):
 
 @app.get("/api/status")
 async def api_status():
-    """Health check and current state."""
     return {
         "status": "online",
-        "project": "Mr. Clarke's Automated Briefing Generator",
+        "project": "Slideweaver — Automated Briefing Generator",
+        "version": "2.0.0",
         "documents_loaded": len(document_store["files"]),
         "chunks_indexed": len(document_store["chunks"]),
         "index_ready": document_store["indexed"],
+        "gemini_available": bool(os.getenv("GOOGLE_API_KEY")),
+        "features": [
+            "gemini_llm", "multi_format_upload", "dynamic_themes",
+            "image_generation", "tone_control", "verbosity_control",
+            "language_support", "toc_slides",
+        ],
     }
 
 
 @app.get("/api/preview-slides")
 async def preview_slides():
-    """Return the last generated slide data for in-browser preview."""
+    import copy
     data = document_store.get("last_slide_data")
     if not data:
         raise HTTPException(status_code=404, detail="No presentation generated yet.")
-    return data
+
+    # Deep copy to avoid mutating stored data
+    preview = copy.deepcopy(data)
+
+    # Normalize image paths to just filenames for the frontend
+    for slide in preview.get("slides", []):
+        if "__image_path__" in slide:
+            raw = slide["__image_path__"]
+            # Extract just the filename from any path format
+            filename = raw.replace("\\", "/").split("/")[-1]
+            slide["__image_path__"] = filename
+
+    return preview
+
+
+@app.get("/api/themes")
+async def list_themes():
+    """List all available theme presets."""
+    themes = []
+    for key, theme in THEME_PRESETS.items():
+        themes.append({
+            "id": key,
+            "name": theme["name"],
+            "primary": theme["primary"],
+            "background": theme["background"],
+            "accent1": theme["accent1"],
+        })
+    themes.append({
+        "id": "auto",
+        "name": "Auto Generate",
+        "primary": "random",
+        "background": "random",
+        "accent1": "random",
+    })
+    return {"themes": themes}
+
+
+@app.post("/api/generate-theme")
+async def generate_theme():
+    """Generate a random color palette."""
+    palette = generate_color_palette()
+    return {"palette": palette}

@@ -1,40 +1,26 @@
 """
 Document Loader Module
 Adapted from:
-  - pdf-to-slides-ai-generator: PDFProcessor.extract_text_from_pdf() (PyPDF2-based extraction)
-  - presenton: DocumentsLoader (multi-format loading with pdfplumber)
+  - pdf-to-slides-ai-generator: PDFProcessor.extract_text_from_pdf()
+  - presenton: DocumentsLoader (multi-format loading)
 
-Handles PDF and TXT document ingestion for the briefing generator pipeline.
+Supports PDF, TXT, DOCX, and PPTX document ingestion.
 """
 
 import os
 import tempfile
 from typing import List
-from PyPDF2 import PdfReader
 
 
 class DocumentLoader:
     """
     Loads and extracts text from uploaded documents.
-    Supports PDF and TXT file formats.
+    Supports PDF, TXT, DOCX, and PPTX file formats.
     """
 
-    SUPPORTED_EXTENSIONS = {".pdf", ".txt"}
+    SUPPORTED_EXTENSIONS = {".pdf", ".txt", ".docx", ".pptx"}
 
     def load_document(self, file_path: str) -> str:
-        """
-        Extract text content from a document file.
-
-        Args:
-            file_path: Path to the document file.
-
-        Returns:
-            Extracted text as a string.
-
-        Raises:
-            FileNotFoundError: If the file does not exist.
-            ValueError: If the file type is not supported.
-        """
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"File not found: {file_path}")
 
@@ -49,32 +35,27 @@ class DocumentLoader:
             return self._extract_pdf(file_path)
         elif ext == ".txt":
             return self._extract_txt(file_path)
+        elif ext == ".docx":
+            return self._extract_docx(file_path)
+        elif ext == ".pptx":
+            return self._extract_pptx(file_path)
 
     def load_from_bytes(self, content: bytes, filename: str) -> str:
-        """
-        Extract text from file bytes (for uploaded files).
-
-        Args:
-            content: Raw file bytes.
-            filename: Original filename to determine type.
-
-        Returns:
-            Extracted text as a string.
-        """
         ext = os.path.splitext(filename)[1].lower()
 
         if ext == ".pdf":
             return self._extract_pdf_from_bytes(content)
         elif ext == ".txt":
             return content.decode("utf-8", errors="ignore")
+        elif ext == ".docx":
+            return self._extract_docx_from_bytes(content)
+        elif ext == ".pptx":
+            return self._extract_pptx_from_bytes(content)
         else:
             raise ValueError(f"Unsupported file type: {ext}")
 
     def _extract_pdf(self, file_path: str) -> str:
-        """
-        Extract text from a PDF file using PyPDF2.
-        Reused from pdf-to-slides-ai-generator PDFProcessor.
-        """
+        from PyPDF2 import PdfReader
         reader = PdfReader(file_path)
         text = ""
         for page in reader.pages:
@@ -84,14 +65,9 @@ class DocumentLoader:
         return text.strip()
 
     def _extract_pdf_from_bytes(self, content: bytes) -> str:
-        """
-        Extract text from PDF bytes by writing to a temp file.
-        Adapted from pdf-to-slides-ai-generator PDFProcessor.extract_text_from_pdf().
-        """
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
             tmp.write(content)
             tmp_path = tmp.name
-
         try:
             return self._extract_pdf(tmp_path)
         finally:
@@ -99,21 +75,79 @@ class DocumentLoader:
                 os.unlink(tmp_path)
 
     def _extract_txt(self, file_path: str) -> str:
-        """Extract text from a plain text file."""
         with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
             return f.read().strip()
 
+    def _extract_docx(self, file_path: str) -> str:
+        """Extract text from a DOCX file using python-docx."""
+        try:
+            from docx import Document
+            doc = Document(file_path)
+            paragraphs = []
+            for para in doc.paragraphs:
+                if para.text.strip():
+                    # Preserve heading levels
+                    if para.style and para.style.name.startswith("Heading"):
+                        level = para.style.name.replace("Heading ", "")
+                        try:
+                            level_num = int(level)
+                            paragraphs.append(f"{'#' * level_num} {para.text}")
+                        except ValueError:
+                            paragraphs.append(para.text)
+                    else:
+                        paragraphs.append(para.text)
+
+            # Also extract from tables
+            for table in doc.tables:
+                for row in table.rows:
+                    row_text = " | ".join(cell.text.strip() for cell in row.cells if cell.text.strip())
+                    if row_text:
+                        paragraphs.append(row_text)
+
+            return "\n\n".join(paragraphs)
+        except ImportError:
+            raise ImportError("python-docx is required for DOCX support. Install with: pip install python-docx")
+
+    def _extract_docx_from_bytes(self, content: bytes) -> str:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".docx") as tmp:
+            tmp.write(content)
+            tmp_path = tmp.name
+        try:
+            return self._extract_docx(tmp_path)
+        finally:
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+
+    def _extract_pptx(self, file_path: str) -> str:
+        """Extract text from an existing PPTX file."""
+        try:
+            from pptx import Presentation
+            prs = Presentation(file_path)
+            text_parts = []
+            for slide_num, slide in enumerate(prs.slides, 1):
+                slide_text = []
+                for shape in slide.shapes:
+                    if shape.has_text_frame:
+                        for paragraph in shape.text_frame.paragraphs:
+                            if paragraph.text.strip():
+                                slide_text.append(paragraph.text.strip())
+                if slide_text:
+                    text_parts.append(f"## Slide {slide_num}\n" + "\n".join(slide_text))
+            return "\n\n".join(text_parts)
+        except Exception as e:
+            raise ValueError(f"Could not extract text from PPTX: {e}")
+
+    def _extract_pptx_from_bytes(self, content: bytes) -> str:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pptx") as tmp:
+            tmp.write(content)
+            tmp_path = tmp.name
+        try:
+            return self._extract_pptx(tmp_path)
+        finally:
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+
     def load_multiple(self, file_paths: List[str]) -> str:
-        """
-        Load and concatenate text from multiple documents.
-        Inspired by presenton DocumentsLoader.load_documents().
-
-        Args:
-            file_paths: List of document file paths.
-
-        Returns:
-            Combined text from all documents.
-        """
         all_text = []
         for path in file_paths:
             text = self.load_document(path)
