@@ -163,6 +163,9 @@ generateBtn.addEventListener('click', async () => {
     resultSection.style.display = 'none';
     progressSection.scrollIntoView({ behavior: 'smooth' });
 
+    // Start the arcade game!
+    if (window.startGame) window.startGame();
+
     const progressSteps = [
         { pct: 10, msg: '> Querying document database...' },
         { pct: 25, msg: '> Retrieving relevant intel chunks...' },
@@ -177,7 +180,7 @@ generateBtn.addEventListener('click', async () => {
     const progressInterval = setInterval(() => {
         if (stepIdx < progressSteps.length) {
             const step = progressSteps[stepIdx];
-            progressFill.style.width = step.pct + '%';
+            if (window.gameUpdateProgress) window.gameUpdateProgress(step.pct);
             addLogEntry(step.msg);
             stepIdx++;
         }
@@ -197,13 +200,17 @@ generateBtn.addEventListener('click', async () => {
         const data = await response.json();
 
         if (response.ok) {
-            progressFill.style.width = '100%';
+            // Trigger game victory with download URL
+            if (window.gameConversionComplete) {
+                window.gameConversionComplete(data.download_url);
+            }
             addLogEntry('> ✓ BRIEFING GENERATION COMPLETE');
             addLogEntry(`> Title: ${data.title}`);
             addLogEntry(`> Slides: ${data.slides_count}`);
 
             setTimeout(() => {
                 progressSection.style.display = 'none';
+                if (window.stopGame) window.stopGame();
                 resultSection.style.display = 'block';
                 resultTitle.textContent = data.title || 'Briefing Ready';
                 resultInfo.textContent = `${data.slides_count} slides generated — Ready for download`;
@@ -211,13 +218,13 @@ generateBtn.addEventListener('click', async () => {
                 downloadBtn.download = data.filename;
                 resultSection.scrollIntoView({ behavior: 'smooth' });
                 systemStatus.textContent = 'BRIEFING READY';
-            }, 1000);
+            }, 3000); // 3s delay so the player can see their victory!
         } else {
             throw new Error(data.detail || 'Generation failed');
         }
     } catch (error) {
         clearInterval(progressInterval);
-        progressFill.style.width = '0%';
+        if (window.stopGame) window.stopGame();
         addLogEntry('> ⚠ ERROR: ' + error.message);
         systemStatus.textContent = 'ERROR — CHECK INPUT';
         alert('⚠ Generation Error: ' + error.message);
