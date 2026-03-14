@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { UploadCloud, File as FileIcon, X } from 'lucide-react';
 import RetroButton from './RetroButton';
+import VecnaEscape from './game/VecnaEscape';
 
 const UploadPanel = ({ onUpload, files, setFiles, isUploading }) => {
     const [isDragging, setIsDragging] = useState(false);
@@ -50,10 +51,10 @@ const UploadPanel = ({ onUpload, files, setFiles, isUploading }) => {
     return (
         <div className="w-full max-w-2xl mx-auto flex flex-col gap-6 animate-fade-in">
             <div className="text-center mb-2">
-                <h2 className="text-2xl font-orbitron text-hawkins-cyan uppercase tracking-widest text-neon-cyan">
+                <h2 className="text-2xl font-stranger text-hawkins-cyan tracking-wider text-neon-cyan drop-shadow-lg">
                     Document Uplink
                 </h2>
-                <p className="text-hawkins-text/70 mt-2 text-sm font-mono uppercase">
+                <p className="text-hawkins-text/70 mt-2 text-sm font-terminal uppercase">
                     Requires PDF or TXT format clearance
                 </p>
             </div>
@@ -88,7 +89,7 @@ const UploadPanel = ({ onUpload, files, setFiles, isUploading }) => {
             </div>
 
             {files.length > 0 && (
-                <div className="border border-hawkins-cyan/30 p-4 bg-black/60 font-mono text-sm relative overflow-hidden">
+                <div className="border border-neon-cyan p-4 bg-black/60 font-mono text-sm relative overflow-hidden shadow-[0_0_10px_rgba(0,229,255,0.2)]">
                     {/* Scanline specifically for the terminal box */}
                     <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px] opacity-50 z-10"></div>
 
@@ -128,6 +129,17 @@ const UploadPanel = ({ onUpload, files, setFiles, isUploading }) => {
                     {isUploading ? 'TRANSMITTING...' : 'PROCESS DOCUMENTS'}
                 </RetroButton>
             </div>
+
+            {/* Render game during the upload transmission time */}
+            {isUploading && (
+                <div className="w-full mt-8 animate-fade-in max-h-[400px]">
+                    <div className="text-hawkins-cyan font-terminal text-sm mb-2 opacity-80 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-hawkins-red animate-pulse"></span>
+                        UPLINK IN PROGRESS - MINI-GAME OVERRIDE
+                    </div>
+                    <VecnaEscape />
+                </div>
+            )}
         </div>
     );
 };

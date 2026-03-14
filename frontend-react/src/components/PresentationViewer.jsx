@@ -55,7 +55,7 @@ const PresentationViewer = ({ result, onRestart }) => {
     return (
         <div className="w-full max-w-4xl mx-auto flex flex-col items-center gap-8 animate-fade-in py-8">
             <div className="text-center mb-6">
-                <h2 className="text-3xl font-orbitron text-hawkins-cyan uppercase tracking-widest text-neon-cyan mb-2">
+                <h2 className="text-3xl font-stranger text-hawkins-cyan tracking-wider text-neon-cyan mb-2 drop-shadow-lg">
                     Briefing Generated
                 </h2>
                 <p className="text-hawkins-text/80 font-mono text-sm uppercase">
@@ -63,9 +63,9 @@ const PresentationViewer = ({ result, onRestart }) => {
                 </p>
             </div>
 
-            <div className="w-full bg-black/60 border border-hawkins-cyan/30 p-6 flex flex-col md:flex-row gap-8 items-center justify-between">
+            <div className="w-full bg-black/60 border border-neon-cyan p-6 flex flex-col md:flex-row gap-8 items-center justify-between">
                 <div className="flex-1 font-mono space-y-4">
-                    <div className="border-l-4 border-hawkins-red pl-4">
+                    <div className="border-l-4 border-neon-red pl-4">
                         <h3 className="text-hawkins-text/60 text-xs mb-1">TOPIC DESIGNATION</h3>
                         <p className="text-lg text-hawkins-red">{result.title}</p>
                     </div>
@@ -135,16 +135,16 @@ const PresentationViewer = ({ result, onRestart }) => {
                                 {currentSlide.type === 'title' ? (
                                     /* Title Slide Layout */
                                     <div className="flex flex-col items-center justify-center text-center space-y-4 animate-fade-in">
-                                        <h1 className="font-orbitron text-2xl md:text-3xl text-hawkins-red text-neon-red uppercase tracking-normal px-4 break-words">
+                                        <h1 className="font-stranger text-2xl md:text-3xl text-hawkins-red text-neon-red tracking-wide px-4 break-words drop-shadow-lg">
                                             {currentSlide.title}
                                         </h1>
-                                        <div className="w-1/2 h-1 bg-hawkins-red shadow-[0_0_10px_#ff2a2a]"></div>
+                                        <div className="w-1/2 h-1 bg-hawkins-red shadow-[0_0_15px_#ff003c]"></div>
                                         <p className="text-hawkins-cyan font-mono text-lg">{currentSlide.subtitle || result.title}</p>
                                     </div>
                                 ) : (
                                     /* Content/Bullet Slide Layout */
                                     <div className="w-full flex flex-col h-full animate-fade-in">
-                                        <h2 className="text-hawkins-red font-orbitron text-xl md:text-2xl mb-4 uppercase tracking-wider border-b border-hawkins-red/30 pb-2">
+                                        <h2 className="text-hawkins-red font-stranger text-xl md:text-2xl mb-4 tracking-wider border-b border-hawkins-red/30 pb-2 text-neon-red">
                                             {currentSlide.title}
                                         </h2>
 

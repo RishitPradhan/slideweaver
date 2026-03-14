@@ -1,7 +1,7 @@
 import React from 'react';
 
 const RetroButton = ({ children, onClick, disabled = false, className = "", variant = "primary" }) => {
-    const baseClasses = "relative px-6 py-3 font-orbitron font-bold uppercase tracking-widest transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-hawkins-bg disabled:opacity-50 disabled:cursor-not-allowed z-10 hover:scale-105 overflow-hidden";
+    const baseClasses = "relative px-6 py-3 font-terminal text-sm md:text-base font-bold uppercase tracking-widest transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-hawkins-bg disabled:opacity-50 disabled:cursor-not-allowed z-10 hover:scale-105 overflow-hidden shadow-lg";
 
     const variants = {
         primary: "text-hawkins-red border-2 border-neon-red bg-hawkins-red/10 hover:bg-hawkins-red/20 glow-effect",

@@ -9,14 +9,16 @@ export default {
       colors: {
         hawkins: {
           bg: '#0b0c10',
-          red: '#ff2a2a',
-          cyan: '#00ffff',
+          red: '#ff003c', /* Neon red */
+          cyan: '#00e5ff', /* Electric blue */
+          purple: '#3a0066', /* Dark purple */
+          amber: '#ffc107', /* Dim Amber */
           text: '#e6e6e6',
         }
       },
       fontFamily: {
-        orbitron: ['"Orbitron"', 'sans-serif'],
-        terminal: ['"Press Start 2P"', 'monospace'],
+        stranger: ['"Rye"', '"Cinzel Decorative"', 'serif'],
+        terminal: ['"VT323"', '"Share Tech Mono"', '"Press Start 2P"', 'monospace'],
         mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', "Liberation Mono", "Courier New", 'monospace'],
       },
       animation: {

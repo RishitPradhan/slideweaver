@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import VecnaEscape from './game/VecnaEscape';
 
 const ProcessingScreen = () => {
     const [logs, setLogs] = useState([]);
@@ -29,19 +30,19 @@ const ProcessingScreen = () => {
 
     return (
         <div className="w-full max-w-3xl mx-auto flex flex-col items-center gap-8 animate-fade-in py-12">
-            {/* Radar Scanner Animation */}
-            <div className="relative w-48 h-48 rounded-full border-4 border-hawkins-red glow-effect flex items-center justify-center overflow-hidden">
-                <div className="absolute inset-2 rounded-full border border-hawkins-red/30"></div>
+            {/* Radar Scanner Animation / Portal */}
+            <div className="relative w-48 h-48 rounded-full border-4 border-neon-red flex items-center justify-center overflow-hidden shadow-[0_0_30px_#ff003c]">
+                <div className="absolute inset-2 rounded-full border border-hawkins-red/50 animate-pulse"></div>
                 <div className="absolute w-full h-[2px] bg-hawkins-red/50 top-1/2 -translate-y-1/2"></div>
                 <div className="absolute h-full w-[2px] bg-hawkins-red/50 left-1/2 -translate-x-1/2"></div>
                 {/* Radar beam sweep */}
-                <div className="absolute inset-0 bg-[conic-gradient(from_0deg,transparent_0deg,transparent_270deg,rgba(255,42,42,0.5)_360deg)] origin-center animate-radar-sweep rounded-full"></div>
+                <div className="absolute inset-0 bg-[conic-gradient(from_0deg,transparent_0deg,transparent_270deg,rgba(255,0,60,0.6)_360deg)] origin-center animate-radar-sweep rounded-full mix-blend-screen"></div>
                 {/* Center blip */}
                 <div className="absolute w-3 h-3 bg-hawkins-cyan rounded-full animate-ping z-10"></div>
             </div>
 
-            <div className="w-full bg-black/80 border-2 border-hawkins-cyan/50 p-6 min-h-[300px] relative font-mono text-sm sm:text-base">
-                <div className="absolute top-0 left-0 w-full h-1 bg-hawkins-cyan shadow-[0_0_10px_#00ffff]"></div>
+            <div className="w-full bg-black/80 border-2 border-neon-cyan p-6 min-h-[300px] relative font-mono text-sm sm:text-base">
+                <div className="absolute top-0 left-0 w-full h-1 bg-hawkins-cyan shadow-[0_0_10px_#00e5ff]"></div>
 
                 {/* Glitch overlay */}
                 <div className="absolute inset-0 pointer-events-none opacity-10 bg-[radial-gradient(ellipse_at_center,rgba(0,255,255,0.2)_0%,transparent_100%)]"></div>
@@ -62,10 +63,19 @@ const ProcessingScreen = () => {
                     ))}
                     {currentLogIndex < processingLogs.length && (
                         <div className="flex gap-2 animate-pulse mt-2">
-                            <span className="text-hawkins-cyan font-bold">_</span>
+                            <span className="text-neon-cyan font-bold">_</span>
                         </div>
                     )}
                 </div>
+            </div>
+
+            {/* Vecna Escape Game Container */}
+            <div className="w-full mt-4 animate-fade-in max-h-[400px]">
+                <div className="text-hawkins-cyan font-terminal text-sm mb-2 opacity-80 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-hawkins-red animate-pulse"></span>
+                    MINI-GAME OVERRIDE DETECTED
+                </div>
+                <VecnaEscape />
             </div>
         </div>
     );

@@ -15,16 +15,16 @@ const QueryTerminal = ({ onGenerate, isGenerating }) => {
     return (
         <div className="w-full max-w-2xl mx-auto flex flex-col gap-6 animate-fade-in">
             <div className="text-center mb-2">
-                <h2 className="text-2xl font-orbitron text-hawkins-red uppercase tracking-widest text-neon-red">
+                <h2 className="text-2xl font-stranger text-hawkins-red tracking-wider text-neon-red drop-shadow-lg">
                     Query Terminal
                 </h2>
-                <p className="text-hawkins-text/70 mt-2 text-sm font-mono uppercase">
+                <p className="text-hawkins-text/70 mt-2 text-sm font-terminal uppercase">
                     Enter investigation parameters
                 </p>
             </div>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-                <div className="border border-hawkins-red/30 bg-black/80 font-mono relative p-1 pb-4">
+                <div className="border border-neon-red bg-black/80 font-mono relative p-1 pb-4">
                     <div className="bg-hawkins-red/20 px-4 py-1 flex items-center justify-between text-xs border-b border-hawkins-red/30 mb-4">
                         <span className="text-hawkins-red">HAWKINS_TERMINAL_v1.0.4</span>
                         <span className="text-hawkins-text/50">auth: granted</span>
@@ -47,7 +47,7 @@ const QueryTerminal = ({ onGenerate, isGenerating }) => {
                     </div>
                 </div>
 
-                <div className="border border-hawkins-cyan/30 bg-black/60 p-4 font-mono">
+                <div className="border border-neon-cyan bg-black/60 p-4 font-mono shadow-[0_0_10px_rgba(0,229,255,0.2)]">
                     <label className="flex flex-col gap-4 cursor-pointer">
                         <div className="flex justify-between items-center text-sm">
                             <span className="text-hawkins-cyan uppercase">Target Slide Count:</span>

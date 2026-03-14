@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import RetroButton from './RetroButton';
+import VecnaEscape from './game/VecnaEscape';
 
 const LandingPage = ({ onStart }) => {
     const [typedText, setTypedText] = useState("");
+    const [showGame, setShowGame] = useState(false);
     const fullText = "\"The Upside Down of documents... transformed into presentations.\"";
 
     useEffect(() => {
@@ -41,7 +43,7 @@ const LandingPage = ({ onStart }) => {
                     </h2>
                 </div>
 
-                <h1 className="text-4xl md:text-6xl font-black font-orbitron text-hawkins-red text-neon-red uppercase tracking-tighter mb-8 leading-tight animate-vhs-glitch" style={{ animationDuration: '4s' }}>
+                <h1 className="text-4xl md:text-6xl font-black font-stranger text-hawkins-red text-neon-red uppercase tracking-wide mb-8 leading-tight animate-vhs-glitch drop-shadow-lg" style={{ animationDuration: '4s' }}>
                     Mr. Clarke's<br />Automated Briefing<br />Generator
                 </h1>
 
@@ -53,12 +55,30 @@ const LandingPage = ({ onStart }) => {
                     </p>
                 </div>
 
-                <div className="mt-8">
+                <div className="mt-8 flex flex-col md:flex-row gap-4 items-center justify-center">
                     <RetroButton onClick={onStart} className="text-xl px-8 py-4">
                         Initialize Briefing System
                     </RetroButton>
+                    <RetroButton onClick={() => setShowGame(true)} className="text-sm px-4 py-2 opacity-70 hover:opacity-100 border-neon-cyan text-neon-cyan">
+                        [PLAY VECNA ESCAPE]
+                    </RetroButton>
                 </div>
             </div>
+
+            {/* Vecna Escape Game Modal */}
+            {showGame && (
+                <div className="absolute inset-0 z-50 bg-black/90 flex flex-col items-center justify-center backdrop-blur-sm animate-fade-in">
+                    <div className="relative w-full max-w-5xl">
+                        <button 
+                            className="absolute -top-12 right-0 text-hawkins-red font-terminal text-xl hover:text-white transition-colors border border-hawkins-red px-2"
+                            onClick={() => setShowGame(false)}
+                        >
+                            [X] CLOSE
+                        </button>
+                        <VecnaEscape />
+                    </div>
+                </div>
+            )}
 
             {/* Particles/Sparks */}
             <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-hawkins-red/5 via-transparent to-transparent opacity-50 pointer-events-none"></div>
