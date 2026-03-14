@@ -6,6 +6,7 @@ const RetroButton = ({ children, onClick, disabled = false, className = "", vari
     const variants = {
         primary: "text-hawkins-red border-2 border-neon-red bg-hawkins-red/10 hover:bg-hawkins-red/20 glow-effect",
         secondary: "text-hawkins-cyan border-2 border-neon-cyan bg-hawkins-cyan/10 hover:bg-hawkins-cyan/20 text-shadow-glow-cyan shadow-glow-cyan",
+        white: "text-white border-2 border-neon-white bg-black hover:bg-white/10 glow-effect text-shadow-glow-white shadow-[0_0_15px_rgba(255,255,255,0.4)]",
     };
 
     return (

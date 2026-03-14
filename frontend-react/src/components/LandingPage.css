@@ -161,9 +161,11 @@ main::before {
     text-align: center;
     z-index: 5;
     position: relative;
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.5);
     border-radius: 12px;
-    backdrop-filter: blur(2px);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .landing-page-root .header-content img {
@@ -172,6 +174,7 @@ main::before {
 
 .landing-page-root .header-content p {
     margin: 20px 0px 30px;
+    color: #ffffff;
 }
 
 .landing-page-root .header-content button {
@@ -245,6 +248,12 @@ main::before {
 
 .landing-page-root #section-inverted-world .section-texts {
     width: 50%;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 30px;
+    border-radius: 8px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .landing-page-root #section-inverted-world .section-texts h2 {
@@ -259,6 +268,12 @@ main::before {
 .landing-page-root #section-stranger-things-trailer .section-texts {
     width: 45%;
     text-align: left;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 30px;
+    border-radius: 8px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .landing-page-root #section-stranger-things-trailer .section-texts h2 {

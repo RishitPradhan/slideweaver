@@ -68,7 +68,9 @@ const LandingPage = ({ onStart }) => {
                         the Upside Down automatically.
                     </p>
                     <div className="button-group">
-                        <button id="switch-theme-button" onClick={switchTheme}>Go Upside Down</button>
+                        <button id="switch-theme-button" onClick={switchTheme}>
+                            {isDarkTheme ? 'Welcome to Hawkins' : 'Go Upside Down'}
+                        </button>
                         <button id="dashboard-button" className="secondary-button" onClick={onStart}>Go to Dashboard</button>
                     </div>
                 </div>

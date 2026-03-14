@@ -88,20 +88,20 @@ const UploadPanel = ({ onUpload, files, setFiles, isUploading }) => {
                 <source src="/landing-page/videos/dashboard.mp4" type="video/mp4" />
             </video>
             <div className="text-center mb-2">
-                <h2 className="text-3xl font-orbitron text-hawkins-red uppercase tracking-[0.2em] neon-glow-red">
+                <h2 className="text-3xl font-orbitron text-white uppercase tracking-[0.2em] neon-glow-white">
                     Document Uplink
                 </h2>
-                <div className="w-24 h-0.5 mx-auto bg-hawkins-red/30 mt-2 mb-4"></div>
-                <p className="text-hawkins-text/60 mt-2 text-xs font-mono uppercase tracking-widest italic">
+                <div className="w-24 h-0.5 mx-auto bg-white/30 mt-2 mb-4"></div>
+                <p className="text-white mt-2 text-xs font-mono uppercase tracking-widest italic neon-glow-white/60">
                     [ ACCESSING SECURE DATA CHANNELS ]
                 </p>
             </div>
 
             <div
-                className={`glass-panel p-10 border-2 border-dashed transition-all duration-500 flex flex-col items-center justify-center min-h-[250px] cursor-pointer
+                className={`glass-panel-white p-10 border-2 border-dashed transition-all duration-500 flex flex-col items-center justify-center min-h-[250px] cursor-pointer
           ${isDragging
-                        ? 'border-hawkins-red scale-[1.02] bg-hawkins-red/20 shadow-[0_0_30px_rgba(255,42,42,0.2)]'
-                        : 'border-hawkins-red/30 hover:border-hawkins-red/60 hover:bg-hawkins-red/5'
+                        ? 'border-hawkins-red scale-[1.02] bg-white/20 shadow-[0_0_30px_rgba(255,255,255,0.2)]'
+                        : 'border-white/30 hover:border-white/60 hover:bg-white/5'
                     } ${isDragging ? 'scanning-effect' : ''}`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
@@ -175,7 +175,7 @@ const UploadPanel = ({ onUpload, files, setFiles, isUploading }) => {
                 <RetroButton
                     onClick={onUpload}
                     disabled={files.length === 0 || isUploading}
-                    variant="primary"
+                    variant="white"
                     className="w-full sm:w-auto"
                 >
                     {isUploading ? 'TRANSMITTING...' : 'PROCESS DOCUMENTS'}

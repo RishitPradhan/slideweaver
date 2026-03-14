@@ -36,6 +36,11 @@ body::after {
   text-shadow: 0 0 5px #00ffff, 0 0 10px #00ffff, 0 0 20px #00ffff;
 }
 
+.text-neon-white {
+  color: #ffffff;
+  text-shadow: 0 0 5px #ffffff, 0 0 10px #ffffff, 0 0 20px #ffffff;
+}
+
 /* Glowing borders */
 .border-neon-red {
   border-color: #ff2a2a;
@@ -45,6 +50,11 @@ body::after {
 .border-neon-cyan {
   border-color: #00ffff;
   box-shadow: 0 0 5px #00ffff, inset 0 0 5px #00ffff;
+}
+
+.border-neon-white {
+  border-color: #ffffff;
+  box-shadow: 0 0 5px #ffffff, inset 0 0 5px #ffffff;
 }
 
 /* Stranger Things inspired Title Animation */
@@ -200,7 +210,13 @@ body::after {
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
 }
 
-.glass-panel::before {
+.glass-panel-white {
+  @apply bg-black border border-white/40 relative overflow-hidden;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 1), 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+.glass-panel::before,
+.glass-panel-white::before {
   content: "";
   position: absolute;
   top: 0;
@@ -217,6 +233,10 @@ body::after {
 
 .neon-glow-cyan {
   text-shadow: 0 0 7px rgba(0, 255, 255, 0.8), 0 0 14px rgba(0, 255, 255, 0.5), 0 0 21px rgba(0, 255, 255, 0.3);
+}
+
+.neon-glow-white {
+  text-shadow: 0 0 10px rgba(255, 255, 255, 1), 0 0 20px rgba(255, 255, 255, 0.8), 0 0 40px rgba(255, 255, 255, 0.6);
 }
 
 /* Scanning Line Animation */
