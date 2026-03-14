@@ -28,8 +28,13 @@ from modules.document_loader import DocumentLoader
 from modules.chunker import TextChunker
 from modules.rag_engine import RAGEngine
 from modules.slide_generator import SlideGenerator
+from modules.slide_designer import SlideDesigner
 from modules.pptx_builder import PptxBuilder
 from modules.citation_builder import CitationBuilder
+from modules.image_extractor import ImageExtractor
+from modules.content_analyzer import ContentAnalyzer
+from modules.chart_generator import ChartGenerator
+from modules.image_generator import ImageGenerator
 
 load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
@@ -60,6 +65,8 @@ app.add_middleware(
 
 # Serve frontend static files
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+# Serve generated data (images, charts)
+app.mount("/data", StaticFiles(directory=UPLOAD_DIR), name="data-files")
 
 # ── Shared State ──────────────────────────────────────────────────
 # In a production app these would be in a database/cache.
@@ -70,12 +77,19 @@ document_store: dict = {
     "chunks": [],      # Text chunks
     "indexed": False,  # Whether FAISS index is built
     "last_slide_data": None,  # Last generated slide JSON for preview
+    "images": [],      # Extracted images from PDFs
 }
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 rag_engine = RAGEngine(api_key=GOOGLE_API_KEY)
 citation_builder = CitationBuilder()
+
+# ── Visualization Generator Logic ───────────────────────────────
+DYNAPICTURES_API_KEY = "d4f84c8f62c0288207ac061a8cdf4ca4586c08e888eb8aec"
+content_analyzer = ContentAnalyzer()
+chart_gen = ChartGenerator(output_dir=os.path.join(UPLOAD_DIR, "charts"))
+image_gen = ImageGenerator(api_key=DYNAPICTURES_API_KEY, output_dir=os.path.join(UPLOAD_DIR, "ai_images"))
 
 
 def _keyword_retrieval(query: str, chunks: list, k: int = 5) -> list:
@@ -145,6 +159,17 @@ async def upload_documents(files: list[UploadFile] = File(...)):
         if not text.strip():
              continue
         all_text_parts.append(text)
+
+        # Extract images from PDFs
+        if ext == ".pdf":
+            try:
+                img_extractor = ImageExtractor(
+                    output_dir=os.path.join(UPLOAD_DIR, "images")
+                )
+                extracted_imgs = img_extractor.extract_from_bytes(content)
+                document_store["images"].extend(extracted_imgs)
+            except Exception as e:
+                print(f"[Upload] Image extraction failed: {e}")
 
         # Track source
         citation_builder.add_source(file.filename, f"Uploaded document ({len(text)} chars)")
@@ -226,7 +251,47 @@ async def generate_presentation(
             detail=f"Failed to generate presentation outline: {str(e)}",
         )
 
-    # Step 3: Add citation slide
+    # Step 3: Automatic Visualization Generation
+    # Analyze slides for data/concepts and generate images/charts
+    print(f"[Generate] Analyzing {len(slide_data.get('slides', []))} slides for visualizations...")
+    hints = content_analyzer.analyze_slides(slide_data.get("slides", []))
+    print(f"[Generate] Found {len(hints)} visualization hints.")
+    
+    for hint in hints:
+        idx = hint["slide_index"]
+        slide = slide_data["slides"][idx]
+        print(f"[Generate] Processing hint for slide {idx}: {hint['type']}")
+        
+        if hint["type"] == "chart":
+            try:
+                chart_path = chart_gen.generate_chart(hint["chart_type"], hint["data"], hint["title"])
+                slide["chart_path"] = chart_path
+                slide["type"] = "chart_slide"
+                print(f"[Generate] ✓ Chart generated: {chart_path}")
+            except Exception as e:
+                print(f"[Generate] ✗ Chart generation failed: {e}")
+                
+        elif hint["type"] == "image":
+            # Generate conceptual image via Dynapictures
+            try:
+                img_path = image_gen.generate_image(hint["prompt"], hint["title"])
+                if img_path:
+                    slide["image_path"] = img_path
+                    slide["type"] = "image_text"
+                    print(f"[Generate] ✓ AI Image generated: {img_path}")
+                else:
+                    print(f"[Generate] ! AI Image generation returned no path (likely missing Template UID)")
+            except Exception as e:
+                print(f"[Generate] ✗ AI Image generation failed: {e}")
+
+    # Step 4: Auto Slide Design — structure, layout, and formatting
+    print("[Generate] Running SlideDesigner...")
+    extracted_images = document_store.get("images", [])
+    designer = SlideDesigner()
+    slide_data = designer.design(slide_data, images=extracted_images)
+    print(f"[Generate] Final slide count: {len(slide_data.get('slides', []))}")
+
+    # Step 4: Add citation slide
     citation_slide = citation_builder.build_citation_slide()
     if "slides" in slide_data:
         slide_data["slides"].append(citation_slide)
@@ -234,7 +299,7 @@ async def generate_presentation(
     # Store for preview
     document_store["last_slide_data"] = slide_data
 
-    # Step 4: Build themed PPTX
+    # Step 5: Build themed PPTX
     builder = PptxBuilder(output_dir=SLIDES_DIR)
     try:
         filepath = builder.build(slide_data)
@@ -274,6 +339,51 @@ async def download_presentation(filename: str):
     )
 
 
+@app.get("/download-codebase")
+async def download_codebase():
+    """
+    Zip the entire project codebase and serve it.
+    Excludes .venv, .git, node_modules, and temporary data.
+    """
+    zip_filename = "slideweaver_full_project"
+    zip_path = os.path.join(UPLOAD_DIR, zip_filename + ".zip")
+    
+    # Simple ignore list
+    ignore_dirs = {".venv", ".git", "node_modules", "__pycache__", ".pytest_cache", ".gemini"}
+    
+    import tempfile
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # We copy to a temp dir first to avoid zipping the zip itself or ignoring mid-zip
+        base_name = os.path.basename(PROJECT_ROOT)
+        copy_dest = os.path.join(temp_dir, base_name)
+        
+        def copytree_filtered(src, dst):
+            os.makedirs(dst, exist_ok=True)
+            for item in os.listdir(src):
+                s = os.path.join(src, item)
+                d = os.path.join(dst, item)
+                if os.path.isdir(s):
+                    if item in ignore_dirs:
+                        continue
+                    copytree_filtered(s, d)
+                else:
+                    shutil.copy2(s, d)
+        
+        copytree_filtered(PROJECT_ROOT, copy_dest)
+        
+        # Create archive
+        shutil.make_archive(os.path.join(UPLOAD_DIR, zip_filename), 'zip', temp_dir, base_name)
+
+    if not os.path.exists(zip_path):
+        raise HTTPException(status_code=500, detail="Failed to create project ZIP.")
+
+    return FileResponse(
+        path=zip_path,
+        filename=zip_filename + ".zip",
+        media_type="application/zip",
+    )
+
+
 @app.get("/api/status")
 async def api_status():
     """Health check and current state."""
@@ -292,4 +402,18 @@ async def preview_slides():
     data = document_store.get("last_slide_data")
     if not data:
         raise HTTPException(status_code=404, detail="No presentation generated yet.")
-    return data
+    
+    # Deep copy to avoid modifying the store
+    import copy
+    preview_data = copy.deepcopy(data)
+    
+    # Convert absolute paths to URLs for preview
+    for slide in preview_data.get("slides", []):
+        if "image_path" in slide and slide["image_path"]:
+            rel_path = os.path.relpath(slide["image_path"], UPLOAD_DIR)
+            slide["image_url"] = f"/data/{rel_path.replace(os.sep, '/')}"
+        if "chart_path" in slide and slide["chart_path"]:
+            rel_path = os.path.relpath(slide["chart_path"], UPLOAD_DIR)
+            slide["chart_url"] = f"/data/{rel_path.replace(os.sep, '/')}"
+            
+    return preview_data

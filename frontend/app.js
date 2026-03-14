@@ -163,54 +163,60 @@ generateBtn.addEventListener('click', async () => {
     resultSection.style.display = 'none';
     progressSection.scrollIntoView({ behavior: 'smooth' });
 
-    // Start the arcade game!
-    if (window.startGame) window.startGame();
+    // Launch the Upside Down portal animation
+    if (window.showConversionAnimation) window.showConversionAnimation();
+
 
     const progressSteps = [
-        { pct: 10, msg: '> Querying document database...' },
-        { pct: 25, msg: '> Retrieving relevant intel chunks...' },
-        { pct: 40, msg: '> Contacting AI intelligence core...' },
-        { pct: 55, msg: '> Generating slide outline...' },
-        { pct: 70, msg: '> Applying Hawkins Lab classification theme...' },
-        { pct: 85, msg: '> Building PPTX presentation...' },
-        { pct: 92, msg: '> Adding entrance animations...' },
+        { pct: 8,  msg: '> Querying document database...' },
+        { pct: 18, msg: '> Retrieving relevant intel chunks...' },
+        { pct: 30, msg: '> Contacting AI intelligence core...' },
+        { pct: 42, msg: '> Generating slide outline...' },
+        { pct: 55, msg: '> Applying Hawkins Lab classification theme...' },
+        { pct: 68, msg: '> Building PPTX presentation...' },
+        { pct: 78, msg: '> Adding entrance animations...' },
+        { pct: 86, msg: '> Embedding classified watermarks...' },
+        { pct: 92, msg: '> Finalizing briefing package...' },
     ];
 
     let stepIdx = 0;
     const progressInterval = setInterval(() => {
         if (stepIdx < progressSteps.length) {
             const step = progressSteps[stepIdx];
-            if (window.gameUpdateProgress) window.gameUpdateProgress(step.pct);
+            if (progressFill) progressFill.style.width = step.pct + '%';
             addLogEntry(step.msg);
             stepIdx++;
         }
-    }, 800);
+    }, 1500);
 
     const formData = new FormData();
     formData.append('topic', topic);
     formData.append('num_slides', slideCount.value);
 
+    // Minimum 12-second delay so the portal animation plays fully
+    const minDelay = new Promise(resolve => setTimeout(resolve, 12000));
+
     try {
-        const response = await fetch('/generate-presentation', {
-            method: 'POST',
-            body: formData,
-        });
+        const [response] = await Promise.all([
+            fetch('/generate-presentation', {
+                method: 'POST',
+                body: formData,
+            }),
+            minDelay,
+        ]);
 
         clearInterval(progressInterval);
         const data = await response.json();
 
         if (response.ok) {
-            // Trigger game victory with download URL
-            if (window.gameConversionComplete) {
-                window.gameConversionComplete(data.download_url);
-            }
+            if (window.hideConversionAnimation) window.hideConversionAnimation();
+            if (progressFill) progressFill.style.width = '100%';
             addLogEntry('> ✓ BRIEFING GENERATION COMPLETE');
             addLogEntry(`> Title: ${data.title}`);
             addLogEntry(`> Slides: ${data.slides_count}`);
 
             setTimeout(() => {
                 progressSection.style.display = 'none';
-                if (window.stopGame) window.stopGame();
                 resultSection.style.display = 'block';
                 resultTitle.textContent = data.title || 'Briefing Ready';
                 resultInfo.textContent = `${data.slides_count} slides generated — Ready for download`;
@@ -218,13 +224,13 @@ generateBtn.addEventListener('click', async () => {
                 downloadBtn.download = data.filename;
                 resultSection.scrollIntoView({ behavior: 'smooth' });
                 systemStatus.textContent = 'BRIEFING READY';
-            }, 3000); // 3s delay so the player can see their victory!
+            }, 1000);
         } else {
             throw new Error(data.detail || 'Generation failed');
         }
     } catch (error) {
         clearInterval(progressInterval);
-        if (window.stopGame) window.stopGame();
+        if (window.hideConversionAnimation) window.hideConversionAnimation();
         addLogEntry('> ⚠ ERROR: ' + error.message);
         systemStatus.textContent = 'ERROR — CHECK INPUT';
         alert('⚠ Generation Error: ' + error.message);
@@ -303,23 +309,62 @@ document.addEventListener('keydown', (e) => {
 function renderSlide() {
     const slide = previewSlides[currentSlideIdx];
     slideCounter.textContent = `${currentSlideIdx + 1} / ${previewSlides.length}`;
+    
+    // Clear and reset classes
+    slideCanvas.className = 'slide-canvas';
 
     if (slide.type === 'title') {
-        slideCanvas.className = 'slide-canvas title-slide';
+        slideCanvas.classList.add('title-slide');
         slideCanvas.innerHTML = `
             <div class="slide-big-title">${escapeHtml(slide.title || '')}</div>
             <div class="slide-subtitle">${escapeHtml(slide.subtitle || '')}</div>
             <div class="slide-badge">HAWKINS NATIONAL LABORATORY — CLASSIFIED</div>
         `;
+    } else if (slide.type === 'section_divider') {
+        slideCanvas.classList.add('divider-slide');
+        slideCanvas.innerHTML = `
+            <div class="divider-content">
+                <div class="divider-line"></div>
+                <div class="slide-big-title">${escapeHtml(slide.title || '')}</div>
+                <div class="slide-subtitle">${escapeHtml(slide.subtitle || '')}</div>
+                <div class="divider-line"></div>
+            </div>
+        `;
+    } else if (slide.type === 'chart_slide') {
+        slideCanvas.classList.add('chart-slide');
+        const chartImg = slide.chart_url ? `<img src="${slide.chart_url}" class="slide-img-full" alt="Generated Chart">` : '<div class="img-placeholder">[CHART DATA NOT AVAILABLE]</div>';
+        slideCanvas.innerHTML = `
+            <div class="slide-title-bar"><h3>${escapeHtml(slide.title || '')}</h3></div>
+            <div class="slide-body centered-img">${chartImg}</div>
+        `;
+    } else if (slide.type === 'image_text') {
+        slideCanvas.classList.add('image-text-slide');
+        const img = slide.image_url ? `<img src="${slide.image_url}" class="slide-img-side" alt="Visual">` : '<div class="img-sidebar">[VISUAL PENDING]</div>';
+        slideCanvas.innerHTML = `
+            <div class="slide-title-bar"><h3>${escapeHtml(slide.title || '')}</h3></div>
+            <div class="slide-split">
+                <div class="slide-left">${img}</div>
+                <div class="slide-right"><p>${escapeHtml(slide.content || '')}</p></div>
+            </div>
+        `;
+    } else if (slide.type === 'two_column') {
+        slideCanvas.classList.add('two-column-slide');
+        const leftBullets = (slide.left_column || []).map(b => `<li>${escapeHtml(b)}</li>`).join('');
+        const rightBullets = (slide.right_column || []).map(b => `<li>${escapeHtml(b)}</li>`).join('');
+        slideCanvas.innerHTML = `
+            <div class="slide-title-bar"><h3>${escapeHtml(slide.title || '')}</h3></div>
+            <div class="slide-split">
+                <div class="column"><ul>${leftBullets}</ul></div>
+                <div class="column"><ul>${rightBullets}</ul></div>
+            </div>
+        `;
     } else if (slide.type === 'bullet_points') {
-        slideCanvas.className = 'slide-canvas';
         const bullets = (slide.bullet_points || []).map(b => `<li>${escapeHtml(b)}</li>`).join('');
         slideCanvas.innerHTML = `
             <div class="slide-title-bar"><h3>${escapeHtml(slide.title || '')}</h3></div>
             <div class="slide-body"><ul>${bullets}</ul></div>
         `;
     } else {
-        slideCanvas.className = 'slide-canvas';
         slideCanvas.innerHTML = `
             <div class="slide-title-bar"><h3>${escapeHtml(slide.title || '')}</h3></div>
             <div class="slide-body"><p>${escapeHtml(slide.content || '')}</p></div>

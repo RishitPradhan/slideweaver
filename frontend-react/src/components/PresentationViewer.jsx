@@ -1,11 +1,67 @@
 import React, { useState } from 'react';
-import { Download, Eye } from 'lucide-react';
+import { Download, Eye, Volume2, VolumeX } from 'lucide-react';
 import RetroButton from './RetroButton';
 
 const PresentationViewer = ({ result, onRestart }) => {
     const [showPreview, setShowPreview] = useState(false);
     const [previewData, setPreviewData] = useState(null);
     const [previewError, setPreviewError] = useState(null);
+    const [isSpeaking, setIsSpeaking] = useState(false);
+    const [rate, setRate] = useState(1.0);
+    const [pitch, setPitch] = useState(1.0);
+
+    const handleToggleAudio = async () => {
+        if (!('speechSynthesis' in window)) {
+            alert("Text-to-speech not supported.");
+            return;
+        }
+
+        if (isSpeaking || window.speechSynthesis.speaking) {
+            window.speechSynthesis.cancel();
+            setIsSpeaking(false);
+            return;
+        }
+
+        let dataToRead = previewData;
+        if (!dataToRead) {
+            try {
+                const response = await fetch('http://localhost:8000/api/preview-slides');
+                if (response.ok) {
+                    dataToRead = await response.json();
+                    setPreviewData(dataToRead);
+                } else throw new Error();
+            } catch (err) {
+                console.error("Audio error", err);
+                return;
+            }
+        }
+
+        if (dataToRead) {
+            let fullText = `${dataToRead.title || result.title}. `;
+            if (dataToRead.slides) {
+                dataToRead.slides.slice(1).forEach(slide => {
+                    if (slide.title) fullText += `${slide.title}. `;
+                    if (slide.subtitle) fullText += `${slide.subtitle}. `;
+                    if (slide.content) fullText += `${slide.content}. `;
+                    const bullets = slide.bullet_points || slide.bullets;
+                    if (bullets) {
+                        bullets.forEach(bullet => fullText += `${bullet}. `);
+                    }
+                    if (slide.left_column) slide.left_column.forEach(bullet => fullText += `${bullet}. `);
+                    if (slide.right_column) slide.right_column.forEach(bullet => fullText += `${bullet}. `);
+                });
+            }
+
+            const utterance = new SpeechSynthesisUtterance(fullText);
+            utterance.rate = rate;
+            utterance.pitch = pitch;
+            utterance.onend = () => setIsSpeaking(false);
+            utterance.onerror = () => setIsSpeaking(false);
+            
+            setIsSpeaking(true);
+            window.speechSynthesis.speak(utterance);
+        }
+    };
 
     const handleTogglePreview = async () => {
         if (!showPreview && !previewData) {
@@ -54,29 +110,67 @@ const PresentationViewer = ({ result, onRestart }) => {
                     </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-                    <RetroButton
-                        onClick={handleTogglePreview}
-                        variant="primary"
-                        className="flex items-center justify-center gap-2"
-                    >
-                        <Eye className="w-5 h-5" />
-                        {showPreview ? 'HIDE PREVIEW' : 'PREVIEW SLIDES'}
-                    </RetroButton>
-
-                    <a
-                        href={`http://localhost:8000${result.download_url}`}
-                        download
-                        className="w-full sm:w-auto"
-                    >
+                <div className="flex flex-col gap-4 w-full md:w-auto">
+                    <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
                         <RetroButton
-                            variant="secondary"
-                            className="w-full flex items-center justify-center gap-2"
+                            onClick={handleTogglePreview}
+                            variant="primary"
+                            className="flex items-center justify-center gap-2"
                         >
-                            <Download className="w-5 h-5" />
-                            DOWNLOAD PPTX
+                            <Eye className="w-5 h-5" />
+                            {showPreview ? 'HIDE PREVIEW' : 'PREVIEW SLIDES'}
                         </RetroButton>
-                    </a>
+
+                        <RetroButton
+                            onClick={handleToggleAudio}
+                            variant="primary"
+                            className="flex items-center justify-center gap-2"
+                        >
+                            {isSpeaking ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                            {isSpeaking ? 'STOP AUDIO' : 'PLAY AUDIO'}
+                        </RetroButton>
+
+                        <a
+                            href={`http://localhost:8000${result.download_url}`}
+                            download
+                            className="w-full sm:w-auto"
+                        >
+                            <RetroButton
+                                variant="secondary"
+                                className="w-full flex items-center justify-center gap-2"
+                            >
+                                <Download className="w-5 h-5" />
+                                DOWNLOAD PPTX
+                            </RetroButton>
+                        </a>
+                    </div>
+
+                    <div className="flex gap-4 p-4 bg-black/40 border border-hawkins-text/20 rounded-sm">
+                        <div className="flex flex-col flex-1">
+                            <label className="text-hawkins-text/80 text-[10px] font-mono mb-2 text-left tracking-wider">SPEECH RATE: {rate.toFixed(1)}x</label>
+                            <input 
+                                type="range" 
+                                min="0.5" 
+                                max="2" 
+                                step="0.1" 
+                                value={rate}
+                                onChange={(e) => setRate(parseFloat(e.target.value))}
+                                className="accent-hawkins-cyan cursor-pointer"
+                            />
+                        </div>
+                        <div className="flex flex-col flex-1">
+                            <label className="text-hawkins-text/80 text-[10px] font-mono mb-2 text-left tracking-wider">VOICE PITCH: {pitch.toFixed(1)}</label>
+                            <input 
+                                type="range" 
+                                min="0" 
+                                max="2" 
+                                step="0.1" 
+                                value={pitch}
+                                onChange={(e) => setPitch(parseFloat(e.target.value))}
+                                className="accent-hawkins-cyan cursor-pointer"
+                            />
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -102,19 +196,76 @@ const PresentationViewer = ({ result, onRestart }) => {
 
                                 {previewData.slides && previewData.slides.length > 0 && (
                                     <div className="w-full max-w-[80%] space-y-8 pb-8">
-                                        {/* Display the first content slide (or index 1 if available) */}
-                                        {previewData.slides.slice(1, 3).map((slide, sIdx) => (
-                                            <div key={sIdx} className="mb-6 animate-fade-in">
-                                                <h2 className="text-hawkins-cyan font-mono text-xl mb-3 border-b border-hawkins-cyan/30 inline-block pb-1">{slide.title}</h2>
-                                                {slide.bullets && (
-                                                    <ul className="text-left font-mono space-y-3">
-                                                        {slide.bullets.slice(0, 4).map((bullet, bIdx) => (
+                                        {/* Display the content slides */}
+                                        {previewData.slides.slice(1).map((slide, sIdx) => (
+                                            <div key={sIdx} className="mb-6 animate-fade-in w-full bg-black/50 p-6 border border-hawkins-cyan/30 rounded-sm shadow-[0_0_15px_rgba(0,0,0,0.5)]">
+                                                {slide.title && (
+                                                    <h2 className="text-hawkins-cyan font-mono text-xl mb-3 border-b border-hawkins-cyan/30 inline-block pb-1">
+                                                        {slide.title}
+                                                    </h2>
+                                                )}
+                                                {slide.subtitle && (
+                                                    <h3 className="text-hawkins-red font-mono text-lg mb-4">{slide.subtitle}</h3>
+                                                )}
+                                                
+                                                {/* Single Content Block */}
+                                                {slide.content && (
+                                                    <p className="text-hawkins-text font-mono text-sm leading-relaxed mb-4">
+                                                        {slide.content}
+                                                    </p>
+                                                )}
+
+                                                {/* Bullet Points */}
+                                                {(slide.bullet_points || slide.bullets) && (
+                                                    <ul className="text-left font-mono space-y-3 mt-4">
+                                                        {(slide.bullet_points || slide.bullets).map((bullet, bIdx) => (
                                                             <li key={bIdx} className="text-hawkins-text flex items-start gap-3 text-sm">
                                                                 <span className="text-hawkins-red mt-1 shrink-0">■</span>
                                                                 <span>{bullet}</span>
                                                             </li>
                                                         ))}
                                                     </ul>
+                                                )}
+
+                                                {/* Two Columns */}
+                                                {(slide.left_column || slide.right_column) && (
+                                                    <div className="flex flex-col md:flex-row gap-6 mt-4 pt-4 border-t border-hawkins-text/10">
+                                                        <div className="flex-1">
+                                                            {slide.left_column && (
+                                                                <ul className="text-left font-mono space-y-3">
+                                                                    {slide.left_column.map((bullet, bIdx) => (
+                                                                        <li key={bIdx} className="text-hawkins-text flex items-start gap-3 text-sm">
+                                                                            <span className="text-hawkins-cyan mt-1 shrink-0">►</span>
+                                                                            <span>{bullet}</span>
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            {slide.right_column && (
+                                                                <ul className="text-left font-mono space-y-3">
+                                                                    {slide.right_column.map((bullet, bIdx) => (
+                                                                        <li key={bIdx} className="text-hawkins-text flex items-start gap-3 text-sm">
+                                                                            <span className="text-hawkins-cyan mt-1 shrink-0">►</span>
+                                                                            <span>{bullet}</span>
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* AI Visualization (Image/Chart) */}
+                                                {(slide.image_url || slide.chart_url) && (
+                                                    <div className="mt-6 flex justify-center">
+                                                        <img 
+                                                            src={`http://localhost:8000${slide.image_url || slide.chart_url}`} 
+                                                            alt={slide.title} 
+                                                            className="max-h-64 border-2 border-hawkins-cyan shadow-[0_0_20px_rgba(0,255,255,0.2)]"
+                                                        />
+                                                    </div>
                                                 )}
                                             </div>
                                         ))}

@@ -82,6 +82,14 @@ DOCUMENT CONTEXT:
 Generate a presentation outline with exactly {num_slides} items in the "slides" list.
 Include 1 title slide at the beginning, and {num_slides - 1} content slides.
 
+IMPORTANT FORMATTING RULES:
+- Each bullet_points slide MUST have at most 6 bullet points.
+- Each bullet point must be concise — under 120 characters.
+- If content is extensive, use multiple slides instead of cramming.
+- Use "section_divider" slides to separate major topics.
+- Use "two_column" slides when comparing two ideas, lists, or categories.
+- Prefer bullet_points over long paragraphs.
+
 Return ONLY a raw JSON object with this structure:
 {{
     "title": "Presentation Main Title",
@@ -96,13 +104,26 @@ Return ONLY a raw JSON object with this structure:
         {{
             "type": "bullet_points",
             "title": "Slide Title",
-            "bullet_points": ["Point 1", "Point 2"],
+            "bullet_points": ["Point 1", "Point 2", "Point 3"],
+            "speaker_notes": "Notes"
+        }},
+        {{
+            "type": "section_divider",
+            "title": "New Section Heading",
+            "subtitle": "Brief description",
+            "speaker_notes": "Notes"
+        }},
+        {{
+            "type": "two_column",
+            "title": "Comparison Title",
+            "left_column": ["Left point 1", "Left point 2"],
+            "right_column": ["Right point 1", "Right point 2"],
             "speaker_notes": "Notes"
         }},
         {{
             "type": "content",
             "title": "Slide Title",
-            "content": "Paragraph content",
+            "content": "Paragraph content (keep under 400 chars)",
             "speaker_notes": "Notes"
         }}
     ]

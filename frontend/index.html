@@ -18,9 +18,17 @@
 </head>
 
 <body>
+    <!-- Advanced Stranger Things Background -->
+    <div class="upside-down-bg">
+        <div class="stranger-rift"></div>
+        <div class="spores-layer spores-small"></div>
+        <div class="spores-layer spores-medium"></div>
+        <div class="spores-layer spores-large"></div>
+        <div class="dark-vignette"></div>
+    </div>
+
     <div class="scanline-overlay"></div>
     <div class="vhs-glitch"></div>
-
     <div class="container">
         <!-- Header -->
         <header class="hawkins-header">
@@ -91,65 +99,18 @@
             </button>
         </section>
 
-        <!-- Progress / Game Section -->
+        <!-- Progress Section -->
         <section class="terminal-section" id="progressSection" style="display:none;">
             <div class="section-header">
                 <span class="terminal-prompt">&gt;_</span>
-                <h2>SURVIVE THE UPSIDE DOWN</h2>
+                <h2>GENERATING BRIEFING</h2>
             </div>
-
-            <!-- Game Area -->
-            <div class="game-wrap">
-                <div class="game-canvas-wrap">
-                    <canvas id="gameCanvas" width="500" height="360"></canvas>
-                    <!-- Gravity Warning -->
-                    <div class="gravity-warning" id="gravityWarning">
-                        <p>⚠ GRAVITY SHIFT ⚠</p>
-                        <p class="gw-sub">THE UPSIDE DOWN PULLS YOU IN</p>
-                    </div>
-                    <!-- Game Over Overlay -->
-                    <div class="game-overlay" id="gameOverOverlay">
-                        <h2>TAKEN BY THE VOID</h2>
-                        <h3>THE UPSIDE DOWN CLAIMS YOU</h3>
-                        <div class="g-score" id="goScore">SCORE: 0</div>
-                        <button class="g-btn" id="restartBtn">FIGHT BACK</button>
-                    </div>
-                    <!-- Victory Overlay -->
-                    <div class="game-overlay" id="victoryOverlay">
-                        <h2>YOU ESCAPED THE UPSIDE DOWN</h2>
-                        <h3>YOUR FILE IS READY</h3>
-                        <div class="g-score" id="victoryScore">FINAL SCORE: 0</div>
-                    </div>
-                </div>
-
-                <!-- HUD -->
-                <div class="game-hud">
-                    <span class="hud-score" id="hudScore">SCORE: 0</span>
-                    <span class="hud-lives" id="hudLives">♥ ♥ ♥</span>
-                    <span class="hud-wave" id="hudWave">WAVE 1</span>
-                </div>
-
-                <!-- Progress Bar -->
-                <div class="game-progress">
-                    <div class="game-progress-label">CONVERTING YOUR PDF — HOLD ON</div>
-                    <div class="game-progress-track">
-                        <div class="game-progress-fill" id="gameProgressFill"></div>
-                    </div>
-                </div>
-
-                <!-- Christmas Lights -->
-                <div class="game-lights" id="gameLightsRow"></div>
-
-                <!-- Mobile Controls -->
-                <div class="game-mobile-controls">
-                    <button class="game-mobile-btn" id="mLeft">◀ LEFT</button>
-                    <button class="game-mobile-btn" id="mFire">FIRE</button>
-                    <button class="game-mobile-btn" id="mRight">RIGHT ▶</button>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
                 </div>
             </div>
-
-            <!-- Log (kept for status messages) -->
-            <div class="progress-log" id="progressLog" style="margin-top:12px;">
+            <div class="progress-log" id="progressLog">
                 <p class="log-entry">&gt; Initializing briefing protocol...</p>
             </div>
         </section>
@@ -208,7 +169,7 @@
     </div>
 
     <script src="/static/js/narration.js"></script>
-    <script src="/static/js/game.js"></script>
+    <script src="/static/js/conversion-animation.js"></script>
     <script src="/static/app.js"></script>
 </body>
 
