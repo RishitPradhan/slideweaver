@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import RetroButton from './RetroButton';
-import VecnaEscape from '../../vecnagame/VecnaEscape';
+import VecnaEscape from '../../../vecnagame/VecnaEscape';
 
 const LandingPage = ({ onStart }) => {
     const [typedText, setTypedText] = useState("");
