@@ -73,22 +73,36 @@ const UploadPanel = ({ onUpload, files, setFiles, isUploading }) => {
     };
 
     return (
-        <div className="w-full max-w-2xl mx-auto flex flex-col gap-6 animate-fade-in">
+        <div className="w-full max-w-2xl mx-auto flex flex-col gap-6 animate-fade-in relative z-10">
+            <video
+                autoPlay
+                muted
+                loop
+                playsInline
+                className="dashboard-video-bg"
+                onLoadedData={(e) => {
+                    // Skip initial 0.5s to avoid black frames during loop
+                    e.target.currentTime = 0.5;
+                }}
+            >
+                <source src="/landing-page/videos/dashboard.mp4" type="video/mp4" />
+            </video>
             <div className="text-center mb-2">
-                <h2 className="text-2xl font-orbitron text-hawkins-cyan uppercase tracking-widest text-neon-cyan">
+                <h2 className="text-3xl font-orbitron text-hawkins-red uppercase tracking-[0.2em] neon-glow-red">
                     Document Uplink
                 </h2>
-                <p className="text-hawkins-text/70 mt-2 text-sm font-mono uppercase">
-                    Accepts PDF, TXT, DOCX, and PPTX documents
+                <div className="w-24 h-0.5 mx-auto bg-hawkins-red/30 mt-2 mb-4"></div>
+                <p className="text-hawkins-text/60 mt-2 text-xs font-mono uppercase tracking-widest italic">
+                    [ ACCESSING SECURE DATA CHANNELS ]
                 </p>
             </div>
 
             <div
-                className={`relative p-8 border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center min-h-[200px] cursor-pointer bg-hawkins-cyan/5
+                className={`glass-panel p-10 border-2 border-dashed transition-all duration-500 flex flex-col items-center justify-center min-h-[250px] cursor-pointer
           ${isDragging
-                        ? 'border-neon-cyan scale-[1.02] bg-hawkins-cyan/10'
-                        : 'border-hawkins-cyan/50 hover:border-hawkins-cyan hover:bg-hawkins-cyan/10'
-                    }`}
+                        ? 'border-hawkins-red scale-[1.02] bg-hawkins-red/20 shadow-[0_0_30px_rgba(255,42,42,0.2)]'
+                        : 'border-hawkins-red/30 hover:border-hawkins-red/60 hover:bg-hawkins-red/5'
+                    } ${isDragging ? 'scanning-effect' : ''}`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
@@ -103,17 +117,21 @@ const UploadPanel = ({ onUpload, files, setFiles, isUploading }) => {
                     accept=".pdf,.txt,.docx,.pptx,application/pdf,text/plain,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.presentationml.presentation"
                 />
 
-                <div className={`p-4 rounded-full bg-hawkins-bg border border-hawkins-cyan/30 mb-4 transition-transform duration-300 ${isDragging ? 'animate-bounce' : ''}`}>
-                    <UploadCloud className="w-8 h-8 text-hawkins-cyan" />
+                <div className={`p-5 rounded-full bg-black/40 border-2 border-hawkins-red/40 mb-6 transition-all duration-300 ${isDragging ? 'animate-pulse scale-110 border-hawkins-red shadow-[0_0_20px_rgba(255,42,42,0.4)]' : 'group-hover:border-hawkins-red/60'}`}>
+                    <UploadCloud className={`w-10 h-10 transition-colors duration-300 ${isDragging ? 'text-hawkins-red' : 'text-hawkins-red/60'}`} />
                 </div>
 
-                <p className="text-hawkins-text font-terminal text-xs text-center leading-loose">
-                    {isDragging ? 'INITIATE TRANSFER...' : 'DROP FILES HERE OR CLICK TO BROWSE'}
+                <p className="text-hawkins-red font-terminal text-sm text-center leading-loose tracking-widest neon-glow-red/50">
+                    {isDragging ? '>>> INITIATE TRANSFER <<<' : 'ATTACH INTELLIGENCE ASSETS'}
                 </p>
 
-                <div className="flex gap-3 mt-3">
+                <p className="text-hawkins-text/40 font-mono text-[10px] mt-2 uppercase">
+                    (or click to browse local sectors)
+                </p>
+
+                <div className="flex gap-4 mt-6">
                     {['PDF', 'TXT', 'DOCX', 'PPTX'].map(ext => (
-                        <span key={ext} className="text-[10px] font-mono px-2 py-0.5 border border-hawkins-cyan/30 text-hawkins-cyan/60">
+                        <span key={ext} className="text-[10px] font-mono px-3 py-1 border border-hawkins-red/20 text-hawkins-red/40 bg-hawkins-red/5 rounded-sm">
                             {ext}
                         </span>
                     ))}
@@ -121,19 +139,19 @@ const UploadPanel = ({ onUpload, files, setFiles, isUploading }) => {
             </div>
 
             {files.length > 0 && (
-                <div className="border border-hawkins-cyan/30 p-4 bg-black/60 font-mono text-sm relative overflow-hidden">
+                <div className="border border-hawkins-red/30 p-4 bg-black/60 font-mono text-sm relative overflow-hidden">
                     <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[length:100%_4px] opacity-50 z-10"></div>
 
-                    <div className="flex justify-between items-center mb-4 border-b border-hawkins-cyan/30 pb-2 relative z-20">
-                        <span className="text-hawkins-cyan">UPLOAD LOG:</span>
+                    <div className="flex justify-between items-center mb-4 border-b border-hawkins-red/30 pb-2 relative z-20">
+                        <span className="text-hawkins-red">UPLOAD LOG:</span>
                         <span className="text-xs text-hawkins-text/50">{files.length} FILES</span>
                     </div>
 
                     <ul className="space-y-2 relative z-20 max-h-48 overflow-y-auto pr-2">
                         {files.map((file, index) => (
-                            <li key={`${file.name}-${index}`} className="flex items-center justify-between text-hawkins-text group hover:bg-hawkins-cyan/10 p-1">
+                            <li key={`${file.name}-${index}`} className="flex items-center justify-between text-hawkins-text group hover:bg-hawkins-red/10 p-1">
                                 <div className="flex items-center gap-2 truncate">
-                                    <span className="text-hawkins-cyan">{'>'}</span>
+                                    <span className="text-hawkins-red">{'>'}</span>
                                     <span className="text-base">{getFileIcon(file.name)}</span>
                                     <span className="truncate">{file.name}</span>
                                     <span className="text-[10px] px-1 py-0.5 border border-hawkins-text/20 text-hawkins-text/40 shrink-0">
@@ -157,7 +175,7 @@ const UploadPanel = ({ onUpload, files, setFiles, isUploading }) => {
                 <RetroButton
                     onClick={onUpload}
                     disabled={files.length === 0 || isUploading}
-                    variant="secondary"
+                    variant="primary"
                     className="w-full sm:w-auto"
                 >
                     {isUploading ? 'TRANSMITTING...' : 'PROCESS DOCUMENTS'}

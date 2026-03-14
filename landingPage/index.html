@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Directive 3: Mr. Clarke's Generator</title>
+
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body class="dark-theme" aria-label="The site is using the light theme" role="body">
+    
+    <header aria-label="Page header.">
+        <audio id="music" autoplay> <!-- Autoplay must be set to play -->
+            <source src="assets/musics/normal-world.mpeg" aria-details="Site Audio"/>
+        </audio>
+
+        <div class="header-content">
+            <img class="invert-element" src="assets/images/banner/logo_pd3.png" alt="Project Directive 3 Logo">
+            <p class="invert-element" role="text"> 
+            Mr. Clarke has disappeared, leaving behind a collection of dense physics books 
+            and radio manuals. The AV Club needs answers to understand the strange signals 
+            appearing around Hawkins. Reading through hundreds of pages manually would 
+            take too long. We need a tool that can summarize the complex physics of 
+            the Upside Down automatically.
+            </p>
+            <button id="switch-theme-button" onclick="switchTheme()">Analyze Documents</button>
+        </div>
+        <div id="top-characters" class="world-characters"></div>
+    </header>
+
+    <!-- Aqui começa a primeira sessão-->
+    <main>
+      <div id="bottom-characters" class="world-characters"></div>
+        <section id="section-inverted-world" class="container"> 
+            <div class="section-texts">
+                <h2>The Mystery of Mr. Clarke</h2>
+                <p role="text">
+                  Our beloved science teacher left behind research notes that hold the key 
+                  to saving Hawkins. A simple text terminal isn't enough; the party needs 
+                  to visually brief the town sheriff and other allies using animated 
+                  presentation decks that simplify the multidimensional threats we face.
+                </p>
+              </div>
+              <img
+              class="invert-element"
+              src="assets/images/content/inverted-world.png"
+              alt="Mr. Clarke's Research Site"
+              />
+        </section>
+    <!-- Aqui começa a segunda sessão-->
+        <section id="section-stranger-things-trailer" class="container">
+            <div class="video-frame" aria-hidden="true">
+                <img src="assets/images/content/mr_clarke_lab.png" alt="Mr. Clarke's Science Lab" style="width: 100%; border-radius: 8px;">
+              </div>
+              <div class="section-texts">
+                <h2>Mission Brief: The Engine</h2>
+                <p role="text">
+                  Build an AI-powered engine that ingests documents and programmatically 
+                  generates fully formatted, animated presentation decks. The system must 
+                  intelligently chunk the retrieved data and outline a logical structure 
+                  with bullet points and visual animations.
+                </p>
+              </div>
+        </section>
+        <!-- Aqui começa a terceira sessão-->
+        <section id="section-stranger-things-gallery">
+            <div class="container section-text">
+                <h2>Core Project Objectives</h2>
+                <ul class="gallery-container" role="gallery">
+                  <li class="gallery-image  invert-element">
+                    <img src="assets/images/content/serie-image-01.png" alt="Ingest and Process Documents" />
+                    <p>Ingest and process a local folder of reference documents including PDFs and text.</p>
+                  </li>
+                  <li class="gallery-image  invert-element">
+                    <img src="assets/images/content/serie-image-02.png" alt="Automated Presentation Output" />
+                    <p>Programmatically generate multi-slide animated presentation decks (HTML/PPTX).</p>
+                  </li>
+                  <li class="gallery-image  invert-element">
+                    <img src="assets/images/content/serie-image-03.png" alt="Programmatic Animations" />
+                    <p>Include automated slide transitions and sequential element animations.</p>
+                  </li>
+                </ul>
+              </div>
+        </section>
+        <!-- Aqui começa a quarta sessão-->
+        <section id="section-form" class="container">
+            <h2>Join the AV Club Recruitment</h2>
+        <p>
+          To complete Project Directive 3, the AV Club needs your technical 
+          expertise. If you have experience with AI, RAG systems, or programmatic 
+          presentation generation, we have a spot for you in the party. Join us 
+          to help find Mr. Clarke and stop the signals.
+        </p>
+
+        <div class="form-content">
+          <h3>Enter the AV Club and build tools from <span>another world<span></span></h3>
+
+          <div class="form-container">
+            <form>
+              <label for="txtName">Full Name</label>
+              <input type="text" name="name" id="txtName">
+          
+              <label for="txtEmail">Email</label>
+              <input type="email" name="email" id="txtEmail">
+          
+              <label for="txtLevel">Physics/Code Level</label>
+              <input type="text" name="level" id="txtLevel">
+          
+              <label for="txtCharacter">Your Role (e.g. Decoder, Builder)</label>
+              <textarea name="character" cols="30" rows="10" id="txtCharacter"></textarea>
+            
+              <button type="button" id="btnSubscribe">Join Project</button>
+            </form>
+            
+          </div>
+        </div>
+        </section>
+    </main>  
+
+    <footer>
+        <p>
+        Project Directive 3: A technical challenge built for the curiosity-driven. 
+        Developed with HTML, CSS, and JavaScript.
+        </p>
+        <img src="assets/images/footer/logo.svg" alt="DIO Logo"/>
+    </footer>
+    
+    <script type="module" src="assets/js/main.js"></script>
+    <script>
+      window.addEventListener('click', function(){
+      const audio = document.getElementById('music');
+      audio.play();
+      audio.volume = 0.2;
+    })
+      function switchTheme() {
+        document.body.classList.toggle('dark-theme');
+        document.body.classList.toggle('light-theme');
+
+        const theme = document.body.classList[0];
+        const music = theme === 'light-theme' ? 'normal-world.mpeg' : 'inverted-world.mpeg'
+
+        const audio = document.getElementById('music');
+        audio.src = '/semana-frontend-mundo-invertido-main/assets/musics/${music}';
+        audio.play();
+        audio.volume = 0.2;
+        }
+    </script>
+</body>
+</html>

@@ -93,6 +93,7 @@ const Home = () => {
                     download_url: data.download_url,
                     slides_count: data.slides_count,
                     theme: data.theme,
+                    theme_colors: data.theme_colors,
                 });
 
                 document.body.classList.add('animate-vhs-glitch');
@@ -116,25 +117,42 @@ const Home = () => {
         setStage(STAGES.LANDING);
     };
 
+    // When presentation is being previewed, render full-page viewer outside the container
+    if (stage === STAGES.RESULT) {
+        return (
+            <div className="min-h-screen bg-hawkins-bg text-hawkins-text font-mono overflow-hidden relative selection:bg-hawkins-red/30">
+                {/* Background Grid */}
+                <div className="fixed inset-0 pointer-events-none z-[-2] overflow-hidden opacity-20">
+                    <div className="absolute inset-[-100%] bg-[linear-gradient(rgba(0,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,255,0.1)_1px,transparent_1px)] bg-[length:40px_40px] transform perspective-[1000px] rotate-x-[60deg] translate-y-[-20%]"></div>
+                </div>
+                <div className="fixed inset-0 pointer-events-none z-[-1] shadow-[inset_0_0_150px_rgba(0,0,0,0.9)]"></div>
+
+                <div className="min-h-screen relative z-10">
+                    <PresentationViewer result={result} onRestart={handleRestart} />
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-hawkins-bg text-hawkins-text font-mono overflow-hidden relative selection:bg-hawkins-red/30">
 
             {/* Background Grid */}
             <div className="fixed inset-0 pointer-events-none z-[-2] overflow-hidden opacity-20">
-                <div className="absolute inset-[-100%] bg-[linear-gradient(rgba(0,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(0,255,255,0.1)_1px,transparent_1px)] bg-[length:40px_40px] transform perspective-[1000px] rotate-x-[60deg] translate-y-[-20%]"></div>
+                <div className="absolute inset-[-100%] bg-[linear-gradient(rgba(255,42,42,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,42,42,0.1)_1px,transparent_1px)] bg-[length:40px_40px] transform perspective-[1000px] rotate-x-[60deg] translate-y-[-20%]"></div>
             </div>
 
             {/* Subtle vignette */}
             <div className="fixed inset-0 pointer-events-none z-[-1] shadow-[inset_0_0_150px_rgba(0,0,0,0.9)]"></div>
 
-            <main className="container mx-auto px-4 py-8 min-h-screen flex flex-col items-center justify-center relative z-10 transition-opacity duration-500">
+            <main className={`${stage === STAGES.LANDING ? 'w-full' : 'container mx-auto px-4 py-8'} min-h-screen flex flex-col items-center justify-center relative z-10 transition-opacity duration-500`}>
 
-                {stage !== STAGES.LANDING && (
+                {(stage !== STAGES.LANDING && stage !== STAGES.RESULT) && (
                     <header className="absolute top-4 left-4 right-4 flex justify-between items-center opacity-70 animate-fade-in pointer-events-none">
                         <div className="font-terminal text-[10px] md:text-xs text-hawkins-red tracking-widest uppercase">
                             SLIDEWEAVER — AI BRIEFING GENERATOR
                         </div>
-                        <div className="font-mono text-xs text-hawkins-cyan">
+                        <div className="font-mono text-xs text-hawkins-red">
                             {new Date().toISOString().split('T')[0]} // v2.0
                         </div>
                     </header>
@@ -145,7 +163,6 @@ const Home = () => {
                     {stage === STAGES.UPLOAD && <UploadPanel files={files} setFiles={setFiles} onUpload={handleUpload} isUploading={isUploading} />}
                     {stage === STAGES.QUERY && <QueryTerminal onGenerate={handleGenerate} isGenerating={isGenerating} />}
                     {stage === STAGES.PROCESSING && <ProcessingScreen />}
-                    {stage === STAGES.RESULT && <PresentationViewer result={result} onRestart={handleRestart} />}
                 </div>
             </main>
         </div>

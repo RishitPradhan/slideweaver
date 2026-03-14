@@ -1,8 +1,8 @@
 """End-to-end test of the slideweaver pipeline."""
 import sys, os, traceback
-sys.path.append("c:/Users/Administrator/Desktop/IIIT Bhu/slideweaver")
+sys.path.append("c:/Users/Administrator/Desktop/backup iiit/slideweaver")
 from dotenv import load_dotenv
-load_dotenv("c:/Users/Administrator/Desktop/IIIT Bhu/slideweaver/.env")
+load_dotenv("c:/Users/Administrator/Desktop/backup iiit/slideweaver/.env")
 
 # Test 1: Gemini slide generation
 print("=== TEST 1: Gemini Slide Generation ===")

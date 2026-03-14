@@ -8,6 +8,8 @@ Falls back to placeholder images when no generator is available.
 
 import os
 import uuid
+import random
+import re
 import requests
 from typing import Optional
 
@@ -28,6 +30,39 @@ class ImageGenerator:
         self.stability_key = os.getenv("STABILITY_API_KEY", "")
         self.pexels_key = os.getenv("PEXELS_API_KEY", "")
         self.pixabay_key = os.getenv("PIXABAY_API_KEY", "")
+        # Track used image URLs to prevent duplicates
+        self._used_urls = set()
+
+    def _extract_keywords(self, prompt: str) -> str:
+        """Extract meaningful keywords from a prompt for better image search."""
+        # Remove common filler words to get better search results
+        stop_words = {
+            'a', 'an', 'the', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+            'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+            'should', 'may', 'might', 'shall', 'can', 'need', 'dare', 'ought',
+            'used', 'to', 'of', 'in', 'for', 'on', 'with', 'at', 'by', 'from',
+            'as', 'into', 'through', 'during', 'before', 'after', 'above',
+            'below', 'between', 'out', 'off', 'over', 'under', 'again',
+            'further', 'then', 'once', 'and', 'but', 'or', 'nor', 'not', 'so',
+            'yet', 'both', 'each', 'few', 'more', 'most', 'other', 'some',
+            'such', 'no', 'only', 'own', 'same', 'than', 'too', 'very',
+            'just', 'because', 'about', 'that', 'this', 'these', 'those',
+            'it', 'its', 'related', 'professional', 'photo', 'image',
+            'showing', 'depicting', 'illustration', 'visual',
+        }
+        # Remove punctuation and split
+        clean = re.sub(r'[^\w\s]', ' ', prompt.lower())
+        words = [w for w in clean.split() if w not in stop_words and len(w) > 2]
+        # Take up to 4 unique meaningful words
+        seen = set()
+        keywords = []
+        for w in words:
+            if w not in seen:
+                seen.add(w)
+                keywords.append(w)
+            if len(keywords) >= 4:
+                break
+        return ' '.join(keywords) if keywords else prompt.split()[0]
 
     def generate_image(self, prompt: str) -> Optional[str]:
         """
@@ -101,19 +136,25 @@ class ImageGenerator:
     def _from_pexels(self, query: str) -> Optional[str]:
         """Fetch a stock photo from Pexels API."""
         try:
-            # Use just the first few keywords for better search results
-            search_query = " ".join(query.split()[:5])
+            search_query = self._extract_keywords(query)
             print(f"[ImageGenerator] Trying Pexels: '{search_query}'...")
             response = requests.get(
                 "https://api.pexels.com/v1/search",
                 headers={"Authorization": self.pexels_key},
-                params={"query": search_query, "per_page": 1, "orientation": "landscape"},
+                params={"query": search_query, "per_page": 5, "orientation": "landscape"},
                 timeout=10,
             )
             if response.status_code == 200:
                 data = response.json()
-                if data.get("photos"):
-                    img_url = data["photos"][0]["src"]["large"]
+                photos = data.get("photos", [])
+                if photos:
+                    # Filter out already-used image URLs
+                    available = [p for p in photos if p["src"]["large"] not in self._used_urls]
+                    if not available:
+                        available = photos  # If all used, allow repeats
+                    chosen = random.choice(available)
+                    img_url = chosen["src"]["large"]
+                    self._used_urls.add(img_url)
                     return self._download_image(img_url, "pexels")
                 else:
                     print("[ImageGenerator] Pexels returned no photos")
@@ -126,14 +167,14 @@ class ImageGenerator:
     def _from_pixabay(self, query: str) -> Optional[str]:
         """Fetch a stock photo from Pixabay API."""
         try:
-            search_query = " ".join(query.split()[:5])
+            search_query = self._extract_keywords(query)
             print(f"[ImageGenerator] Trying Pixabay: '{search_query}'...")
             response = requests.get(
                 "https://pixabay.com/api/",
                 params={
                     "key": self.pixabay_key,
                     "q": search_query,
-                    "per_page": 3,
+                    "per_page": 5,
                     "image_type": "photo",
                     "orientation": "horizontal",
                 },
@@ -141,8 +182,14 @@ class ImageGenerator:
             )
             if response.status_code == 200:
                 data = response.json()
-                if data.get("hits"):
-                    img_url = data["hits"][0]["largeImageURL"]
+                hits = data.get("hits", [])
+                if hits:
+                    available = [h for h in hits if h["largeImageURL"] not in self._used_urls]
+                    if not available:
+                        available = hits
+                    chosen = random.choice(available)
+                    img_url = chosen["largeImageURL"]
+                    self._used_urls.add(img_url)
                     return self._download_image(img_url, "pixabay")
                 else:
                     print("[ImageGenerator] Pixabay returned no hits")

@@ -1,0 +1,460 @@
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Libre+Baskerville&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Rubik+Glitch&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:wght@500&display=swap');
+
+.landing-page-root {
+    --primary-color: #cf0f0f;
+    --primary-color-contrast: #ffffff;
+    --field-background-color: #000;
+}
+
+.landing-page-root.light-theme {
+    --page-background: linear-gradient(180deg,
+            #ffffff 0%,
+            #ffffff 65%,
+            rgba(255, 255, 255, 0.75) 100%);
+    --header-background-color: #e3e3e3;
+    --highlight-color: #000000;
+    --featured-font-family: "Archivo", sans-serif;
+    --character-top-image-src: url("/landing-page/images/characters/kids-on-the-bike.svg");
+    --character-top-image-color: #ffffff;
+    --character-bottom-image-src: url("/landing-page/images/characters/inverted-world-monster.svg");
+    --character-bottom-image-color: #e5e5e5;
+    --background-lamp-image: url("/landing-page/images/backgrounds/lamps.png");
+    --footer-background-color: #b5bbbf;
+}
+
+.landing-page-root.dark-theme {
+    --page-background: linear-gradient(180deg,
+            #050000 0%,
+            #130404 65%,
+            rgba(19, 1, 1, 0.75) 100%);
+    --header-background-color: #220f0f;
+    --highlight-color: #ffffff;
+    --featured-font-family: "Rubik Glitch", sans-serif;
+    --character-bottom-image-src: url("/landing-page/images/characters/inverted-world-monster.svg");
+    --character-bottom-image-color: rgba(255, 255, 255, 0.1);
+    --character-top-image-src: url("/landing-page/images/characters/kids-on-the-bike.svg");
+    --character-top-image-color: #000;
+    --background-lamp-image: url("/landing-page/images/backgrounds/lamps-inverted.png");
+    --footer-background-color: #000;
+}
+
+.landing-page-root.dark-theme button,
+.landing-page-root.dark-theme h1,
+.landing-page-root.dark-theme h2,
+.landing-page-root.dark-theme h3 {
+    letter-spacing: 5px;
+    font-weight: normal;
+}
+
+.landing-page-root.dark-theme .invert-element {
+    transform: rotateZ(180deg) scaleX(-1);
+}
+
+.landing-page-root.dark-theme header::before,
+.landing-page-root.dark-theme main::before {
+    transform: rotateZ(180deg) scaleX(-1);
+}
+
+.landing-page-root {
+    margin: 0;
+    box-sizing: border-box;
+    transition: 1s;
+    width: 100%;
+    color: var(--highlight-color);
+}
+
+.invert-element,
+header::before,
+main::before {
+    transition: 1s;
+}
+
+.landing-page-root h1,
+.landing-page-root h2,
+.landing-page-root h3 {
+    font-family: var(--featured-font-family);
+    font-size: 3rem;
+    color: var(--primary-color);
+    text-transform: uppercase;
+    margin-bottom: 40px;
+}
+
+.landing-page-root p {
+    color: var(--highlight-color);
+}
+
+.landing-page-root p,
+.landing-page-root input,
+.landing-page-root textarea,
+.landing-page-root label {
+    font-family: "Libre Baskerville", serif;
+}
+
+.landing-page-root button {
+    padding: 16px 32px;
+    background-color: transparent;
+    font-weight: 900;
+    font-family: var(--featured-font-family);
+    font-size: 1.25rem;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 1s;
+}
+
+.landing-page-root input,
+.landing-page-root textarea {
+    border: 2px solid var(--primary-color-contrast);
+    background-color: var(--field-background-color);
+    color: var(--primary-color-contrast);
+    padding: 8px;
+    margin-bottom: 24px;
+    font-size: 1rem;
+}
+
+.landing-page-root label {
+    margin-bottom: 8px;
+}
+
+.landing-page-root input:focus-visible,
+.landing-page-root textarea:focus-visible {
+    outline: none;
+    border-color: black;
+}
+
+.landing-page-root header {
+    background-color: var(--header-background-color);
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.landing-page-root .hero-video-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 1;
+    opacity: 1;
+    background: transparent;
+}
+
+.button-group {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.landing-page-root .header-content {
+    max-width: 700px;
+    padding: 40px 20px 60px;
+    text-align: center;
+    z-index: 5;
+    position: relative;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    backdrop-filter: blur(2px);
+}
+
+.landing-page-root .header-content img {
+    width: 70%;
+}
+
+.landing-page-root .header-content p {
+    margin: 20px 0px 30px;
+}
+
+.landing-page-root .header-content button {
+    border: 3px solid var(--primary-color);
+    color: var(--primary-color);
+}
+
+.landing-page-root .header-content button:hover {
+    background-color: var(--primary-color);
+    color: var(--primary-color-contrast);
+}
+
+.landing-page-root .world-characters {
+    width: 100%;
+    height: 900px;
+    position: absolute;
+}
+
+.landing-page-root .world-characters#top-characters {
+    height: 100%;
+    background-color: var(--character-top-image-color);
+    bottom: -20px;
+    mask: var(--character-top-image-src) bottom / 70% no-repeat;
+    -webkit-mask: var(--character-top-image-src) bottom / 70% no-repeat;
+}
+
+.landing-page-root .world-characters#bottom-characters {
+    height: 800px;
+    background-color: var(--character-bottom-image-color);
+    top: 5px;
+    transform: rotateZ(180deg) scaleX(-1);
+    position: relative;
+    mask: var(--character-bottom-image-src) bottom / contain no-repeat;
+    -webkit-mask: var(--character-bottom-image-src) bottom / 70% no-repeat;
+}
+
+.landing-page-root main {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.landing-page-root main::before {
+    content: "";
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    background: var(--page-background), no-repeat url("/landing-page/images/backgrounds/florest.png");
+    background-size: cover;
+    z-index: -1;
+}
+
+.landing-page-root section {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 100px;
+    width: 100%;
+    max-width: 1200px;
+}
+
+.landing-page-root .container {
+    width: 100%;
+    max-width: 1200px;
+}
+
+.landing-page-root #section-inverted-world {
+    align-items: center;
+}
+
+.landing-page-root #section-inverted-world .section-texts {
+    width: 50%;
+}
+
+.landing-page-root #section-inverted-world .section-texts h2 {
+    max-width: 300px;
+}
+
+.landing-page-root #section-stranger-things-trailer {
+    align-items: center;
+    gap: 40px;
+}
+
+.landing-page-root #section-stranger-things-trailer .section-texts {
+    width: 45%;
+    text-align: left;
+}
+
+.landing-page-root #section-stranger-things-trailer .section-texts h2 {
+    max-width: 100%;
+    display: block;
+}
+
+.landing-page-root #section-stranger-things-trailer .section-texts p {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    margin-top: 20px;
+}
+
+.landing-page-root #section-stranger-things-trailer .video-frame {
+    width: 55%;
+    background-color: var(--primary-color);
+    padding: 0;
+    display: flex;
+}
+
+.landing-page-root #section-stranger-things-gallery {
+    width: 100%;
+    justify-content: center;
+    background: var(--background-lamp-image) 120% / 50% no-repeat;
+}
+
+.landing-page-root #section-stranger-things-gallery .container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.landing-page-root #section-stranger-things-gallery .container h2 {
+    width: 100%;
+    max-width: 800px;
+    text-align: center;
+}
+
+.landing-page-root #section-stranger-things-gallery .gallery-container {
+    display: flex;
+    gap: 50px;
+    padding: 0;
+    list-style: none;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.landing-page-root #section-stranger-things-gallery .gallery-image {
+    display: flex;
+    flex-direction: column;
+    width: 250px;
+    outline: 20px solid var(--highlight-color);
+    border: 3px solid var(--primary-color);
+    box-sizing: initial;
+    background-color: var(--highlight-color);
+}
+
+.landing-page-root #section-stranger-things-gallery .gallery-image img {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    border: 10px solid var(--highlight-color);
+}
+
+.landing-page-root #section-stranger-things-gallery .gallery-image p {
+    padding: 15px 10px;
+    color: var(--primary-color);
+    font-weight: bold;
+    text-align: center;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.landing-page-root #section-form {
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    text-align: center;
+}
+
+.landing-page-root #section-form h2 {
+    width: 100%;
+    max-width: 600px;
+}
+
+.landing-page-root #section-form .form-content h3 {
+    color: var(--highlight-color);
+    flex-basis: 30%;
+    text-align: left;
+    margin: 0%;
+}
+
+.landing-page-root #section-form .form-content h3 span {
+    color: var(--primary-color);
+}
+
+.landing-page-root #section-form .form-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.landing-page-root #section-form .form-container {
+    flex-basis: 50%;
+    position: relative;
+}
+
+.landing-page-root #section-form .form-container::after {
+    content: "";
+    background-color: var(--highlight-color);
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    z-index: -1;
+}
+
+.landing-page-root #section-form .form-container form {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 24px;
+    background-color: var(--primary-color);
+    color: var(--primary-color-contrast);
+    text-align: left;
+}
+
+.landing-page-root #section-form .form-container form button {
+    border: none;
+    background-color: var(--field-background-color);
+    color: var(--primary-color-contrast);
+    max-width: 300px;
+    align-self: center;
+}
+
+.landing-page-root #section-form .form-container form button:hover {
+    background-color: var(--primary-color-contrast);
+    color: var(--field-background-color);
+}
+
+.landing-page-root footer {
+    padding: 60px 0;
+    background-color: var(--footer-background-color);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+    width: 100%;
+    position: relative;
+}
+
+.landing-page-root footer p {
+    max-width: 700px;
+    margin-bottom: 80px;
+}
+
+.landing-page-root footer::before,
+.landing-page-root footer::after {
+    content: "";
+    width: 300px;
+    height: 200px;
+    background: url("/landing-page/images/footer/tape.svg") no-repeat;
+    background-size: contain;
+    position: absolute;
+}
+
+.landing-page-root footer::before {
+    left: -50px;
+    transform: rotateZ(-10deg);
+}
+
+.landing-page-root footer::after {
+    right: -50px;
+    transform: rotateZ(10deg);
+}
+
+@media (max-width: 768px) {
+    .landing-page-root section {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .landing-page-root #section-inverted-world .section-texts,
+    .landing-page-root #section-stranger-things-trailer .section-texts,
+    .landing-page-root #section-stranger-things-trailer .video-frame,
+    .landing-page-root #section-form .form-content {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .landing-page-root #section-form .form-container {
+        width: 100%;
+        margin-top: 40px;
+    }
+}

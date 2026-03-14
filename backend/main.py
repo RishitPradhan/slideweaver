@@ -56,9 +56,10 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Serve frontend static files
@@ -215,10 +216,16 @@ async def generate_presentation(
 
     # Step 2: Generate slide outline via LLM
     print("\n[STEP 2] Generating slide outline via LLM...")
+
+    # Adjust slide count to ensure total presentation matches user's request
+    # Total = Title(1) + Citation(1) + (1 if TOC) + Content Slides
+    num_content_slides = num_slides - 2 - (1 if toc_enabled else 0)
+    num_content_slides = max(1, num_content_slides)
+
     generator = SlideGenerator()
     try:
         slide_data = generator.generate_outline(
-            topic, context, num_slides,
+            topic, context, num_content_slides,
             tone=tone, verbosity=verbosity, language=language,
             include_images=images_enabled, include_toc=toc_enabled,
         )
@@ -247,18 +254,33 @@ async def generate_presentation(
             print("[STEP 3] Auto-injecting image prompts into content slides...")
             inject_count = 0
             for s in slide_data["slides"]:
-                if inject_count >= 2:
-                    break
                 if s.get("type") in ("content", "bullet_points") and "__image_prompt__" not in s:
                     title = s.get("title", "")
-                    content = s.get("content", "")
-                    if not content and s.get("bullet_points"):
-                        content = ", ".join(str(b) for b in s["bullet_points"][:3])
-                    s["__image_prompt__"] = f"Professional photo related to: {title}. {content[:80]}"
-                    s["type"] = "image"
+                    # Build a specific search query from slide content
+                    bullets = s.get("bullet_points", [])
+                    if bullets:
+                        keywords = " ".join([" ".join(str(b).split()[:3]) for b in bullets[:2]])
+                    else:
+                        keywords = s.get("content", "")[:60]
+                    s["__image_prompt__"] = f"{title} {keywords}".strip()[:100]
                     inject_count += 1
                     print(f"  -> Injected prompt for: {title}")
             print(f"[STEP 3] Injected {inject_count} image prompts")
+        else:
+            # Even when LLM provided some, inject into remaining content slides
+            extra = 0
+            for s in slide_data["slides"]:
+                if s.get("type") in ("content", "bullet_points") and "__image_prompt__" not in s:
+                    title = s.get("title", "")
+                    bullets = s.get("bullet_points", [])
+                    if bullets:
+                        keywords = " ".join([" ".join(str(b).split()[:3]) for b in bullets[:2]])
+                    else:
+                        keywords = s.get("content", "")[:60]
+                    s["__image_prompt__"] = f"{title} {keywords}".strip()[:100]
+                    extra += 1
+            if extra:
+                print(f"[STEP 3] Auto-filled {extra} additional image prompts")
 
         try:
             slide_data["slides"] = process_slides_images(
@@ -282,12 +304,31 @@ async def generate_presentation(
     if "slides" in slide_data:
         slide_data["slides"].append(citation_slide)
 
-    # Store for preview
-    document_store["last_slide_data"] = slide_data
-    print(f"[STEP 4] Stored {len(slide_data.get('slides', []))} slides for preview")
+    # Ensure final slide count strictly matches requested num_slides
+    current_count = len(slide_data.get("slides", []))
+    if current_count > num_slides:
+        print(f"[PIPELINE] Pruning slides to match target: {current_count} -> {num_slides}")
+        diff = current_count - num_slides
+        # Remove extra slides from the end of the content section (before citation)
+        for _ in range(diff):
+            if len(slide_data["slides"]) > 2:  # Keep at least title and citation
+                slide_data["slides"].pop(-2)
+    elif current_count < num_slides:
+        print(f"[PIPELINE] WARNING: Generated fewer slides than requested ({current_count} < {num_slides})")
 
     # Step 5: Build themed PPTX
     print("\n[STEP 5] Building themed PPTX...")
+
+    # Fetch theme colors early to avoid NameError
+    from modules.theme_engine import get_theme
+    theme_colors = get_theme(template)
+
+    # Store for preview
+    slide_data["theme"] = template
+    slide_data["theme_colors"] = theme_colors
+    document_store["last_slide_data"] = slide_data
+    print(f"[STEP 4] Stored {len(slide_data.get('slides', []))} slides for preview")
+
     builder = PptxBuilder(output_dir=SLIDES_DIR, theme_name=template)
     try:
         filepath = builder.build(slide_data)
@@ -305,10 +346,6 @@ async def generate_presentation(
     print(f"{'='*60}")
     print(f"[PIPELINE] COMPLETE - {len(slide_data.get('slides', []))} slides")
     print(f"{'='*60}\n")
-
-    # Get the theme colors to send to the frontend
-    from modules.theme_engine import get_theme
-    theme_colors = get_theme(template)
 
     return JSONResponse({
         "status": "success",

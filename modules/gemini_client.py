@@ -67,17 +67,19 @@ class GeminiClient:
         if include_images:
             image_instruction = """
 IMPORTANT - IMAGE GENERATION:
-You MUST include an "__image_prompt__" field on at least 2 slides.
-The "__image_prompt__" value should be a detailed prompt for generating an image.
-For slides with __image_prompt__, set the type to "image".
+You MUST include an "__image_prompt__" field on EVERY bullet_points and content slide.
+The "__image_prompt__" value should be a specific, descriptive image search query (3-6 words) that directly relates to the slide's topic.
+Examples of GOOD prompts: "underground mine safety inspection", "coal miner wearing protective gear", "autonomous drone scanning tunnel".
+Examples of BAD prompts: "professional photo related to mining" (too vague), "infographic" (not searchable).
+Do NOT change the slide type — keep it as "bullet_points" or "content". Just add the __image_prompt__ field.
 """
             image_slide_example = """,
         {{
-            "type": "image",
-            "title": "Visual Overview",
-            "content": "Caption describing the visual",
-            "__image_prompt__": "A professional infographic showing the key concept, clean flat design, modern colors",
-            "speaker_notes": "This visual illustrates the main point"
+            "type": "bullet_points",
+            "title": "Safety Equipment & Standards",
+            "bullet_points": ["Hard hats with built-in sensors", "Gas detection wearables", "Emergency oxygen supply"],
+            "__image_prompt__": "mining safety equipment hard hat sensors",
+            "speaker_notes": "Modern mining requires advanced safety equipment"
         }}"""
 
         toc_instruction = ""
@@ -94,7 +96,11 @@ presentations that communicate ideas effectively.
 
 Generate the presentation in {language}.
 
-IMPORTANT: You must respond with ONLY valid JSON. No other text before or after the JSON."""
+CRITICAL RULES:
+- You must respond with ONLY valid JSON. No other text before or after the JSON.
+- Do NOT include any HTML tags (no <img>, <br>, <b>, <p>, etc.) in any field.
+- All text must be plain text only — no markdown, no HTML, no special formatting.
+- Do NOT reference external files or images in the text content."""
 
         user_prompt = f"""Create a presentation about the following topic using the provided document context.
 
@@ -142,6 +148,8 @@ Rules:
 - Extract the most important information from the context
 - The title slide must be the first slide with type "title"
 - Respond with ONLY the JSON object, nothing else
+- NEVER include HTML tags like <img>, <br>, <b>, <a> etc. in any text field
+- All content must be plain text, no markup of any kind
 """
 
         model = genai.GenerativeModel(self.model_name)
