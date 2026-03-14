@@ -1,38 +1,26 @@
 import React, { useState, useEffect } from 'react';
+import VecnaEscape from './VecnaEscape';
 
 const ProcessingScreen = () => {
-    const [logs, setLogs] = useState([]);
-    const [currentLogIndex, setCurrentLogIndex] = useState(0);
-
-    const processingLogs = [
-        "INITIALIZING SYSTEM OVERRIDE...",
-        "ACCESSING UPLOADED DOCUMENTS...",
-        "SCANNING DOCUMENTS FOR ANOMALIES...",
-        "EXTRACTING ENTITIES & KEY CONCEPTS...",
-        "BUILDING VECTOR SPACE INDEX...",
-        "CONNECTING TO GEMINI AI...",
-        "SYNTHESIZING KNOWLEDGE GRAPH...",
-        "GENERATING SLIDE STRUCTURE...",
-        "PROCESSING IMAGE ASSETS...",
-        "APPLYING DYNAMIC THEME PALETTE...",
-        "RENDERING PRESENTATION ARTIFACT...",
-        "FINALIZING PPTX OUTPUT...",
-    ];
+    const [progress, setProgress] = useState(0);
 
     useEffect(() => {
-        if (currentLogIndex < processingLogs.length) {
-            const timer = setTimeout(() => {
-                setLogs(prev => [...prev, processingLogs[currentLogIndex]]);
-                setCurrentLogIndex(prev => prev + 1);
-            }, Math.random() * 1000 + 500);
-            return () => clearTimeout(timer);
-        }
-    }, [currentLogIndex]);
+        const duration = 20000; // Assume 20s for processing
+        const interval = 500;
+        const step = (100 / (duration / interval));
 
-    const progress = Math.round((currentLogIndex / processingLogs.length) * 100);
+        const timer = setInterval(() => {
+            setProgress(p => {
+                if (p >= 99) return 99;
+                return Math.min(99, p + step);
+            });
+        }, interval);
+
+        return () => clearInterval(timer);
+    }, []);
 
     return (
-        <div className="w-full max-w-3xl mx-auto flex flex-col items-center gap-10 animate-fade-in py-12 relative z-10">
+        <div className="w-full max-w-5xl mx-auto flex flex-col items-center gap-10 animate-fade-in py-12 relative z-10">
             {/* Radar Scanner Animation */}
             <div className="relative w-56 h-56 rounded-full border-4 border-hawkins-red neon-glow-red flex items-center justify-center overflow-hidden bg-black/40 backdrop-blur-sm">
                 <div className="absolute inset-4 rounded-full border-2 border-hawkins-red/20"></div>
@@ -51,7 +39,7 @@ const ProcessingScreen = () => {
                         <span className="w-2 h-2 bg-hawkins-red animate-pulse"></span>
                         SYSTEM_SYNTHESIS_PROGRESS
                     </span>
-                    <span className="text-lg font-bold neon-glow-red">{progress}%</span>
+                    <span className="text-lg font-bold neon-glow-red">{Math.floor(progress)}%</span>
                 </div>
                 <div className="w-full h-3 bg-black/60 border border-hawkins-red/30 overflow-hidden">
                     <div
@@ -61,36 +49,24 @@ const ProcessingScreen = () => {
                 </div>
             </div>
 
-            <div className="w-full glass-panel border-hawkins-red/30 p-0 min-h-[350px] shadow-[0_0_30px_rgba(255,42,42,0.05)]">
+            {/* Vecna Escape Game Container */}
+            <div className="w-full glass-panel border-hawkins-red/30 p-0 shadow-[0_0_30px_rgba(255,42,42,0.05)] overflow-hidden">
                 <div className="bg-hawkins-red/10 px-4 py-2 flex items-center justify-between text-[10px] border-b border-hawkins-red/30 tracking-widest text-hawkins-red">
                     <span className="font-bold flex items-center gap-2">
-                        INTELLIGENCE_STREAMING_CHANNEL_ACTIVE
+                        VECNA_SIMULATION_ACTIVE
                     </span>
                     <span className="animate-pulse flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_5px_#22c55e]"></span>
-                        GEMINI_AI_LINK: SYNC
+                        SYSTEM: ONLINE
                     </span>
                 </div>
 
-                <div className="p-6 space-y-3 h-[250px] overflow-y-auto terminal-scrollbar font-mono text-sm sm:text-base bg-black/20">
-                    {logs.map((log, index) => (
-                        <div key={index} className="flex gap-3 items-start animate-fade-in" style={{ animationDuration: '0.4s' }}>
-                            <span className="text-hawkins-red font-bold opacity-80 shrink-0">{'>'}</span>
-                            <span className="text-hawkins-text font-terminal tracking-wide leading-relaxed">
-                                {log}
-                            </span>
-                        </div>
-                    ))}
-                    {currentLogIndex < processingLogs.length && (
-                        <div className="flex gap-2 mt-2">
-                            <span className="text-hawkins-red font-bold opacity-80 shrink-0">{'>'}</span>
-                            <span className="terminal-cursor text-hawkins-red"></span>
-                        </div>
-                    )}
+                <div className="w-full bg-black flex justify-center items-center">
+                    <VecnaEscape />
                 </div>
 
                 <div className="bg-black/40 px-4 py-1 text-[8px] font-mono text-hawkins-text/20 uppercase tracking-[0.5em] text-center border-t border-hawkins-red/10">
-                    Transmission Encrypted - Hawkins National Laboratory Secure Line
+                    Stay Alive Until Briefing Generates - Hawkins National Laboratory Secure Line
                 </div>
             </div>
         </div>
