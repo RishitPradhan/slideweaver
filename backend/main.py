@@ -35,9 +35,19 @@ from modules.image_generator import process_slides_images
 from modules.theme_engine import THEME_PRESETS, generate_color_palette
 
 # ── App Configuration ─────────────────────────────────────────────
-UPLOAD_DIR = os.path.join(PROJECT_ROOT, "data")
-VECTOR_DIR = os.path.join(PROJECT_ROOT, "vector_store")
-SLIDES_DIR = os.path.join(PROJECT_ROOT, "slides")
+IS_VERCEL = os.environ.get("VERCEL") == "1"
+
+if IS_VERCEL:
+    # Vercel serverless functions only have write access to /tmp
+    BASE_STORAGE = "/tmp"
+    UPLOAD_DIR = os.path.join(BASE_STORAGE, "data")
+    VECTOR_DIR = os.path.join(BASE_STORAGE, "vector_store")
+    SLIDES_DIR = os.path.join(BASE_STORAGE, "slides")
+else:
+    UPLOAD_DIR = os.path.join(PROJECT_ROOT, "data")
+    VECTOR_DIR = os.path.join(PROJECT_ROOT, "vector_store")
+    SLIDES_DIR = os.path.join(PROJECT_ROOT, "slides")
+
 IMAGES_DIR = os.path.join(SLIDES_DIR, "images")
 FRONTEND_DIR = os.path.join(PROJECT_ROOT, "frontend")
 

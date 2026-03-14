@@ -38,7 +38,7 @@ const Home = () => {
                 formData.append('files', file);
             });
 
-            const response = await fetch('http://localhost:8000/upload-documents', {
+            const response = await fetch('/api/upload-documents', {
                 method: 'POST',
                 body: formData,
             });
@@ -77,7 +77,7 @@ const Home = () => {
                 formData.append('include_images', options.includeImages || false);
                 formData.append('include_toc', options.includeToc || false);
 
-                const response = await fetch('http://localhost:8000/generate-presentation', {
+                const response = await fetch('/api/generate-presentation', {
                     method: 'POST',
                     body: formData,
                 });
