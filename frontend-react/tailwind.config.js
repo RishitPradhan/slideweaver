@@ -3,6 +3,7 @@ export default {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
+    "./vecnagame/**/*.{js,ts,jsx,tsx,css}",
   ],
   theme: {
     extend: {

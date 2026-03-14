@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
+import './vecnagame.css';
 
 const VecnaEscape = () => {
     const canvasRef = useRef(null);

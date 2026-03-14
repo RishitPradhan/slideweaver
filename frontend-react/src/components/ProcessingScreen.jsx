@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import VecnaEscape from './game/VecnaEscape';
+import VecnaEscape from '../../vecnagame/VecnaEscape';
 
 const ProcessingScreen = () => {
     const [logs, setLogs] = useState([]);

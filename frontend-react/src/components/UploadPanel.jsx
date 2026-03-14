@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { UploadCloud, File as FileIcon, X } from 'lucide-react';
 import RetroButton from './RetroButton';
-import VecnaEscape from './game/VecnaEscape';
+import VecnaEscape from '../../vecnagame/VecnaEscape';
 
 const UploadPanel = ({ onUpload, files, setFiles, isUploading }) => {
     const [isDragging, setIsDragging] = useState(false);
